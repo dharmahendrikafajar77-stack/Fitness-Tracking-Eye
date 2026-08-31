@@ -1,0 +1,74 @@
+# ============================================================
+# Fitness Tracking Eye - Sensor Configuration
+# ============================================================
+# Optional sensors that complement camera-based tracking
+# ============================================================
+
+# IMU Sensors (MPU6050 via ESP32)
+imu:
+  enabled: false
+  sensors:
+    - id: "imu_wrist_right"
+      name: "Right Wrist IMU"
+      body_part: "right_wrist"
+      connection: "ble"        # ble | wifi | serial
+      address: ""              # BLE MAC or WiFi IP
+      sample_rate_hz: 100
+      
+    - id: "imu_chest"
+      name: "Chest IMU"
+      body_part: "chest"
+      connection: "ble"
+      address: ""
+      sample_rate_hz: 100
+
+  # Signal processing
+  processing:
+    # Complementary filter alpha (0-1, higher = more gyro trust)
+    complementary_alpha: 0.98
+    # Low-pass filter cutoff frequency (Hz)
+    lowpass_cutoff: 20
+    # Peak detection minimum prominence
+    peak_min_prominence: 0.5
+
+# Force Plate / Jump Mat
+force_plate:
+  enabled: false
+  connection: "serial"         # serial | wifi
+  port: ""                     # COM port or WiFi IP
+  baud_rate: 115200
+  
+  calibration:
+    # Known weight for calibration (kg)
+    calibration_weight: 10.0
+    # Zero offset (raw ADC value when no load)
+    zero_offset: 0
+    # Scale factor (force per ADC unit)
+    scale_factor: 1.0
+  
+  jump_detection:
+    # Force threshold below which = airborne (Newtons)
+    airborne_threshold: 10.0
+    # Minimum flight time to register jump (ms)
+    min_flight_time_ms: 50
+
+# Sensor Fusion Settings
+fusion:
+  enabled: false
+  method: "weighted_average"   # weighted_average | kalman | lstm
+  
+  # Trust weights (0-1) for each sensor type
+  weights:
+    camera: 0.6
+    imu: 0.3
+    force_plate: 0.1
+  
+  # Adaptive weighting
+  adaptive:
+    enabled: true
+    # Increase IMU trust during fast motion
+    fast_motion_imu_boost: 0.2
+    # Increase camera trust when stationary
+    stationary_camera_boost: 0.2
+    # Reduce camera trust during occlusion
+    occlusion_camera_penalty: 0.3

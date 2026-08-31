@@ -1,0 +1,100 @@
+# ============================================================
+# Fitness Tracking Eye - Camera Configuration
+# ============================================================
+# Supports: webcam, esp32_cam, raspi_cam, smartphone, ip_cam
+# ============================================================
+
+# Processing strategy: "edge" or "central"
+processing_strategy: "central"
+
+# Default camera settings
+defaults:
+  resolution:
+    width: 640
+    height: 480
+  fps: 30
+  flip_horizontal: false
+
+# Camera nodes - 4 cameras for 360° coverage
+cameras:
+  # Camera 1: Front view (primary)
+  - id: "cam_front"
+    name: "Front Camera"
+    type: "webcam"           # webcam | esp32_cam | raspi_cam | smartphone | ip_cam
+    position: "front"
+    enabled: true
+    source: 0                # Webcam index or URL
+    resolution:
+      width: 640
+      height: 480
+    fps: 30
+
+  # Camera 2: Right side view
+  - id: "cam_right"
+    name: "Right Camera"
+    type: "webcam"
+    position: "right"
+    enabled: false
+    source: 1
+    resolution:
+      width: 640
+      height: 480
+    fps: 30
+
+  # Camera 3: Left side view
+  - id: "cam_left"
+    name: "Left Camera"
+    type: "webcam"
+    position: "left"
+    enabled: false
+    source: 2
+    resolution:
+      width: 640
+      height: 480
+    fps: 30
+
+  # Camera 4: Back view
+  - id: "cam_back"
+    name: "Back Camera"
+    type: "webcam"
+    position: "back"
+    enabled: false
+    source: 3
+    resolution:
+      width: 640
+      height: 480
+    fps: 30
+
+# ============================================================
+# Example configurations for different camera types:
+# ============================================================
+#
+# ESP32-CAM:
+#   type: "esp32_cam"
+#   source: "http://192.168.1.100:81/stream"
+#   resolution:
+#     width: 640
+#     height: 480
+#   fps: 15
+#
+# Raspberry Pi Camera (edge mode):
+#   type: "raspi_cam"
+#   source: "ws://192.168.1.101:8765"  # WebSocket for skeleton data
+#   processing: "edge"
+#
+# Smartphone (IP Webcam app):
+#   type: "smartphone"
+#   source: "http://192.168.1.102:8080/video"
+#   resolution:
+#     width: 1280
+#     height: 720
+#   fps: 30
+#
+# IP Camera (RTSP):
+#   type: "ip_cam"
+#   source: "rtsp://admin:password@192.168.1.103:554/stream1"
+#   resolution:
+#     width: 1920
+#     height: 1080
+#   fps: 15
+# ============================================================

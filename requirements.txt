@@ -1,0 +1,27 @@
+# Core
+opencv-python>=4.8.0
+mediapipe>=0.10.0
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Configuration
+pyyaml>=6.0
+
+# Web Server (for dashboard)
+websockets>=12.0
+aiohttp>=3.9.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Testing
+pytest>=7.4.0
+
+# Optional - Alternative Pose Estimators
+# tensorflow>=2.13.0        # For MoveNet
+# torch>=2.0.0              # For OpenPose / YOLOv8
+# ultralytics>=8.0.0        # For YOLOv8 Pose
+
+# Optional - Sensor Communication
+# pyserial>=3.5             # For Arduino/ESP32 serial
+# bleak>=0.21.0             # For BLE (IMU sensors)

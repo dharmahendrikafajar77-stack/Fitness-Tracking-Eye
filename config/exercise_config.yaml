@@ -1,0 +1,91 @@
+# ============================================================
+# Fitness Tracking Eye - Exercise Configuration
+# ============================================================
+# All angle values are in degrees.
+# Thresholds use hysteresis (separate up/down values) to
+# prevent false counting due to landmark jitter.
+# ============================================================
+
+general:
+  # Minimum time between state transitions (ms) to filter noise
+  min_transition_time_ms: 200
+  # Smoothing window size (frames) for landmark moving average
+  smoothing_window: 5
+  # Minimum landmark visibility/confidence score (0-1)
+  min_visibility: 0.5
+
+push_up:
+  # Keypoints: Shoulder (11/12), Elbow (13/14), Wrist (15/16), Hip (23/24), Ankle (27/28)
+  elbow_angle:
+    up_threshold: 160      # Elbow angle above this = UP state
+    down_threshold: 90     # Elbow angle below this = DOWN state
+  form_checks:
+    # Hip should be aligned with shoulder-ankle line (deviation in degrees)
+    max_hip_sag_angle: 15
+    # Minimum depth (elbow angle) required for a valid rep
+    min_depth_angle: 110
+  preferred_view: "sagittal"  # Side view
+
+pull_up:
+  # Keypoints: Shoulder (11/12), Elbow (13/14), Wrist (15/16), Nose (0)
+  elbow_angle:
+    hang_threshold: 160    # Arms fully extended
+    up_threshold: 70       # Arms bent at top
+  chin_position:
+    # Chin must be above wrist Y-position for valid rep
+    use_chin_over_bar: true
+  form_checks:
+    # Maximum hip swing angle (detect kipping)
+    max_hip_swing_angle: 20
+    # Check for full arm extension at bottom
+    require_full_extension: true
+  preferred_view: "frontal"  # Front view
+
+sit_up:
+  # Keypoints: Shoulder (11/12), Hip (23/24), Knee (25/26)
+  hip_angle:
+    down_threshold: 140    # Lying down (torso-thigh angle large)
+    up_threshold: 70       # Sitting up (torso-thigh angle small)
+  form_checks:
+    # Check feet remain planted (ankle position stability)
+    max_ankle_movement: 30  # pixels
+    # Minimum ROM for valid rep
+    min_rom_degrees: 60
+  preferred_view: "sagittal"  # Side view
+
+squat_jump:
+  # Keypoints: Hip (23/24), Knee (25/26), Ankle (27/28), Shoulder (11/12)
+  knee_angle:
+    stand_threshold: 160   # Standing straight
+    squat_threshold: 90    # Full squat depth
+  jump_detection:
+    # Minimum vertical displacement (normalized) to detect airborne
+    min_jump_displacement: 0.03
+    # Minimum flight time (ms) to count as valid jump
+    min_flight_time_ms: 100
+  form_checks:
+    # Knee should not go past toes (check knee X vs ankle X)
+    check_knee_over_toe: true
+    # Minimum squat depth for valid rep
+    min_squat_depth_angle: 110
+    # Landing knee angle check (should not lock out < threshold)
+    landing_knee_min_angle: 150
+  preferred_view: "frontal_and_sagittal"  # Needs dual view
+
+vertical_jump:
+  # Keypoints: Hip (23/24), Knee (25/26), Ankle (27/28), Shoulder (11/12)
+  phases:
+    crouch_knee_threshold: 130   # Preparatory squat
+    jump_displacement: 0.05      # Normalized Y displacement for airborne
+  metrics:
+    # Method to calculate jump height
+    # "displacement" = track hip/ankle landmark movement
+    # "flight_time" = h = (1/8) * g * t^2
+    height_method: "displacement"
+    gravity: 9.81  # m/s^2
+  form_checks:
+    # Arm swing coordination check
+    check_arm_swing: true
+    # Landing alignment (bilateral symmetry)
+    check_landing_symmetry: true
+  preferred_view: "sagittal"  # Side view for height measurement
