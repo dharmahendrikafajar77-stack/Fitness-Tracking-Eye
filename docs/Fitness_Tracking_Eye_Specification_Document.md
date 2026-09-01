@@ -157,11 +157,11 @@ Form factor XIAO ESP32-S3 Sense sangat compact dengan dimensi hanya 21 kali 17.5
 
 5.3 Alasan Tidak Memilih ESP32-CAM
 
-ESP32-CAM dari AI-Thinker pernah menjadi standard untuk proyek kamera berbasis mikrokontroler, namun di tahun 2025 hingga 2026 sudah dianggap sebagai produk legacy. Perbedaan utama terletak pada prosesor dimana ESP32-CAM menggunakan ESP32 tanpa vector instructions sementara XIAO ESP32-S3 Sense menggunakan ESP32-S3 dengan vector instructions. PSRAM pada ESP32-CAM hanya 4MB dibandingkan 8MB pada XIAO ESP32-S3 Sense. Stabilitas WiFi ESP32-CAM dikenal bermasalah terutama saat multi-stream, sementara ESP32-S3 lebih stabil. Form factor ESP32-CAM lebih besar. Selisih harga hanya sekitar 8 dollar per unit atau 32 dollar untuk empat unit, yang sangat worth it mengingat peningkatan signifikan di semua aspek.
+ESP32-CAM dari AI-Thinker pernah menjadi standard untuk proyek kamera berbasis mikrokontroler, namun di tahun 2025 hingga 2026 sudah dianggap sebagai produk legacy. Perbedaan utama terletak pada prosesor dimana ESP32-CAM menggunakan ESP32 tanpa vector instructions sementara XIAO ESP32-S3 Sense menggunakan ESP32-S3 dengan vector instructions. PSRAM pada ESP32-CAM hanya 4MB dibandingkan 8MB pada XIAO ESP32-S3 Sense. Stabilitas WiFi ESP32-CAM dikenal bermasalah terutama saat multi-stream, sementara ESP32-S3 lebih stabil. Form factor ESP32-CAM lebih besar. Selisih harga hanya sekitar Rp 120.000 per unit atau Rp 480.000 untuk empat unit, yang sangat worth it mengingat peningkatan signifikan di semua aspek.
 
 5.4 Alasan Tidak Memilih Raspberry Pi
 
-Raspberry Pi 4 atau 5 dengan Camera Module sebenarnya merupakan opsi yang secara teknis lebih powerful karena bisa menjalankan edge processing dengan MediaPipe di setiap node. Namun opsi ini tidak dipilih karena beberapa alasan. Pertama, biaya empat unit Raspberry Pi 4 dengan Camera Module berkisar 260 hingga 320 dollar, jauh lebih mahal dari empat unit XIAO ESP32-S3 Sense yang hanya sekitar 52 hingga 60 dollar. Kedua, visi proyek ini adalah menggunakan mikrokontroler dan modul kamera, bukan Single Board Computer. Ketiga, konsumsi daya Raspberry Pi jauh lebih tinggi yaitu 6 hingga 12 watt per unit dibandingkan ESP32-S3 yang hanya sekitar 1.25 watt. Keempat, form factor Raspberry Pi lebih besar sehingga kurang portable.
+Raspberry Pi 4 atau 5 dengan Camera Module sebenarnya merupakan opsi yang secara teknis lebih powerful karena bisa menjalankan edge processing dengan MediaPipe di setiap node. Namun opsi ini tidak dipilih karena beberapa alasan. Pertama, biaya empat unit Raspberry Pi 4 dengan Camera Module berkisar Rp 3.900.000 hingga Rp 4.800.000, jauh lebih mahal dari empat unit XIAO ESP32-S3 Sense yang hanya sekitar Rp 780.000 hingga Rp 900.000. Kedua, visi proyek ini adalah menggunakan mikrokontroler dan modul kamera, bukan Single Board Computer. Ketiga, konsumsi daya Raspberry Pi jauh lebih tinggi yaitu 6 hingga 12 watt per unit dibandingkan ESP32-S3 yang hanya sekitar 1.25 watt. Keempat, form factor Raspberry Pi lebih besar sehingga kurang portable.
 
 5.5 Alasan Tidak Memilih Smartphone dan IP Camera
 
@@ -204,19 +204,19 @@ Komponen ketiga adalah sumber daya listrik. Ada tiga opsi yang bisa dipilih terg
 
 6.3 Camera Node — Opsi Sumber Daya
 
-Opsi pertama adalah USB-C power adapter dengan kabel. Ini merupakan opsi paling sederhana dan stabil untuk penggunaan indoor. Setiap Camera Node dihubungkan ke power adapter USB standar 5V 1A melalui kabel USB-C. Kelebihannya adalah power unlimited sehingga tidak perlu khawatir baterai habis, paling stabil karena tidak ada fluktuasi tegangan, dan paling murah karena adapter USB 5V sudah sangat umum. Kekurangannya adalah setiap Camera Node memiliki kabel power yang terhubung ke outlet listrik, sehingga kurang rapi dan membutuhkan akses ke empat colokan listrik. Estimasi biaya per unit adalah 3 hingga 5 dollar untuk adapter dan kabel.
+Opsi pertama adalah USB-C power adapter dengan kabel. Ini merupakan opsi paling sederhana dan stabil untuk penggunaan indoor. Setiap Camera Node dihubungkan ke power adapter USB standar 5V 1A melalui kabel USB-C. Kelebihannya adalah power unlimited sehingga tidak perlu khawatir baterai habis, paling stabil karena tidak ada fluktuasi tegangan, dan paling murah karena adapter USB 5V sudah sangat umum. Kekurangannya adalah setiap Camera Node memiliki kabel power yang terhubung ke outlet listrik, sehingga kurang rapi dan membutuhkan akses ke empat colokan listrik. Estimasi biaya per unit adalah Rp 45.000 hingga Rp 75.000 untuk adapter dan kabel.
 
-Opsi kedua adalah powerbank mini. Setiap Camera Node dipasangkan dengan powerbank kecil berkapasitas 5000 hingga 10000 mAh yang ditempatkan di dasar tripod atau diikat ke tripod. Kelebihannya adalah wireless sehingga tidak ada kabel power yang mengganggu, mudah didapatkan karena powerbank sudah sangat umum, dan bisa diganti dengan powerbank apapun yang ada. Kekurangannya adalah menambah bulk pada setiap camera node, perlu di-charge sebelum sesi, dan posisi powerbank di tripod perlu diperhatikan agar tidak mengganggu keseimbangan. Estimasi daya tahan dengan powerbank 5000mAh adalah sekitar 15 hingga 20 jam continuous streaming karena ESP32-S3 hanya mengkonsumsi sekitar 250 hingga 350 miliampere. Estimasi biaya per unit adalah 5 hingga 10 dollar.
+Opsi kedua adalah powerbank mini. Setiap Camera Node dipasangkan dengan powerbank kecil berkapasitas 5000 hingga 10000 mAh yang ditempatkan di dasar tripod atau diikat ke tripod. Kelebihannya adalah wireless sehingga tidak ada kabel power yang mengganggu, mudah didapatkan karena powerbank sudah sangat umum, dan bisa diganti dengan powerbank apapun yang ada. Kekurangannya adalah menambah bulk pada setiap camera node, perlu di-charge sebelum sesi, dan posisi powerbank di tripod perlu diperhatikan agar tidak mengganggu keseimbangan. Estimasi daya tahan dengan powerbank 5000mAh adalah sekitar 15 hingga 20 jam continuous streaming karena ESP32-S3 hanya mengkonsumsi sekitar 250 hingga 350 miliampere. Estimasi biaya per unit adalah Rp 75.000 hingga Rp 150.000.
 
-Opsi ketiga adalah baterai LiPo yang terintegrasi di dalam casing. Baterai LiPo berkapasitas 500 hingga 1000 mAh disolder langsung ke battery pad di board XIAO ESP32-S3 dan dikemas bersama board di dalam casing. Ini menghasilkan device yang paling compact dan clean karena semua komponen berada dalam satu unit kecil. XIAO ESP32-S3 memiliki built-in battery charging circuit sehingga baterai bisa di-charge langsung melalui port USB-C tanpa perlu charger terpisah. Kelebihannya adalah form factor paling kecil dan rapi, truly wireless, dan charging terintegrasi melalui USB-C. Kekurangannya adalah memerlukan soldering untuk menghubungkan baterai ke board, daya tahan lebih terbatas yaitu sekitar 2 hingga 4 jam dengan baterai 1000mAh, dan memerlukan casing custom yang mengakomodasi board dan baterai. Estimasi biaya per unit adalah 3 hingga 6 dollar untuk baterai LiPo.
+Opsi ketiga adalah baterai LiPo yang terintegrasi di dalam casing. Baterai LiPo berkapasitas 500 hingga 1000 mAh disolder langsung ke battery pad di board XIAO ESP32-S3 dan dikemas bersama board di dalam casing. Ini menghasilkan device yang paling compact dan clean karena semua komponen berada dalam satu unit kecil. XIAO ESP32-S3 memiliki built-in battery charging circuit sehingga baterai bisa di-charge langsung melalui port USB-C tanpa perlu charger terpisah. Kelebihannya adalah form factor paling kecil dan rapi, truly wireless, dan charging terintegrasi melalui USB-C. Kekurangannya adalah memerlukan soldering untuk menghubungkan baterai ke board, daya tahan lebih terbatas yaitu sekitar 2 hingga 4 jam dengan baterai 1000mAh, dan memerlukan casing custom yang mengakomodasi board dan baterai. Estimasi biaya per unit adalah Rp 45.000 hingga Rp 90.000 untuk baterai LiPo.
 
 6.4 Camera Node — Casing dan Enclosure
 
 Setiap Camera Node memerlukan casing atau enclosure untuk melindungi komponen elektronik dan memudahkan mounting ke tripod. Ada beberapa opsi casing.
 
-Opsi pertama adalah casing 3D printed custom. Casing dirancang menggunakan software CAD seperti Fusion 360 atau TinkerCAD dan dicetak menggunakan 3D printer dengan material PLA atau PETG. Desain casing harus mengakomodasi lubang untuk lensa kamera di sisi depan, ventilasi untuk pembuangan panas, akses ke port USB-C untuk charging dan programming, mount thread standar seperempat inci di bagian bawah untuk kompatibilitas dengan tripod standar, serta ruang untuk baterai LiPo jika menggunakan opsi baterai terintegrasi. Ukuran casing diperkirakan sekitar 35 kali 30 kali 20 milimeter tanpa baterai atau 35 kali 30 kali 35 milimeter dengan baterai LiPo terintegrasi. Estimasi biaya cetak per unit adalah 1 hingga 3 dollar untuk material.
+Opsi pertama adalah casing 3D printed custom. Casing dirancang menggunakan software CAD seperti Fusion 360 atau TinkerCAD dan dicetak menggunakan 3D printer dengan material PLA atau PETG. Desain casing harus mengakomodasi lubang untuk lensa kamera di sisi depan, ventilasi untuk pembuangan panas, akses ke port USB-C untuk charging dan programming, mount thread standar seperempat inci di bagian bawah untuk kompatibilitas dengan tripod standar, serta ruang untuk baterai LiPo jika menggunakan opsi baterai terintegrasi. Ukuran casing diperkirakan sekitar 35 kali 30 kali 20 milimeter tanpa baterai atau 35 kali 30 kali 35 milimeter dengan baterai LiPo terintegrasi. Estimasi biaya cetak per unit adalah Rp 15.000 hingga Rp 45.000 untuk material.
 
-Opsi kedua adalah casing off-the-shelf berupa project box atau junction box kecil yang tersedia di toko elektronik. Project box berukuran sekitar 50 kali 35 kali 20 milimeter bisa dimodifikasi dengan mengebor lubang untuk lensa dan USB-C. Lebih cepat dan mudah daripada 3D printing namun hasilnya kurang presisi dan kurang estetis. Estimasi biaya per unit adalah 1 hingga 2 dollar.
+Opsi kedua adalah casing off-the-shelf berupa project box atau junction box kecil yang tersedia di toko elektronik. Project box berukuran sekitar 50 kali 35 kali 20 milimeter bisa dimodifikasi dengan mengebor lubang untuk lensa dan USB-C. Lebih cepat dan mudah daripada 3D printing namun hasilnya kurang presisi dan kurang estetis. Estimasi biaya per unit adalah Rp 15.000 hingga Rp 30.000.
 
 Opsi ketiga adalah tanpa casing dimana board ditempel langsung ke tripod menggunakan double-sided tape atau velcro. Ini merupakan opsi tercepat dan termurah untuk prototyping namun tidak direkomendasikan untuk deployment karena komponen tidak terlindungi.
 
@@ -248,15 +248,15 @@ Total waktu perakitan per unit diperkirakan 10 hingga 15 menit untuk opsi USB ad
 
 Berikut adalah daftar komponen lengkap untuk satu unit Camera Node.
 
-XIAO ESP32-S3 Sense board sudah termasuk modul kamera OV2640 dan antena WiFi dengan harga sekitar 13 hingga 15 dollar. Casing 3D printed atau project box dengan harga sekitar 1 hingga 3 dollar. Mini tripod foldable dengan thread mount seperempat inci seharga sekitar 5 hingga 8 dollar.
+XIAO ESP32-S3 Sense board sudah termasuk modul kamera OV2640 dan antena WiFi dengan harga sekitar Rp 195.000 hingga Rp 225.000. Casing 3D printed atau project box dengan harga sekitar Rp 15.000 hingga Rp 45.000. Mini tripod foldable dengan thread mount seperempat inci seharga sekitar Rp 75.000 hingga Rp 120.000.
 
-Untuk opsi USB power, diperlukan USB-C cable panjang 1 hingga 2 meter seharga sekitar 2 hingga 3 dollar dan USB power adapter 5V 1A seharga sekitar 2 hingga 3 dollar.
+Untuk opsi USB power, diperlukan USB-C cable panjang 1 hingga 2 meter seharga sekitar Rp 30.000 hingga Rp 45.000 dan USB power adapter 5V 1A seharga sekitar Rp 30.000 hingga Rp 45.000.
 
-Untuk opsi baterai terintegrasi, diperlukan baterai LiPo 3.7V kapasitas 500 hingga 1000 mAh seharga sekitar 3 hingga 6 dollar.
+Untuk opsi baterai terintegrasi, diperlukan baterai LiPo 3.7V kapasitas 500 hingga 1000 mAh seharga sekitar Rp 45.000 hingga Rp 90.000.
 
-Total biaya per Camera Node berkisar 23 hingga 29 dollar untuk opsi USB power atau 22 hingga 32 dollar untuk opsi baterai terintegrasi.
+Total biaya per Camera Node berkisar Rp 345.000 hingga Rp 435.000 untuk opsi USB power atau Rp 330.000 hingga Rp 480.000 untuk opsi baterai terintegrasi.
 
-Total biaya empat Camera Node berkisar 92 hingga 128 dollar.
+Total biaya empat Camera Node berkisar Rp 1.380.000 hingga Rp 1.920.000.
 
 6.8 Tracking Band — Gambaran Fisik
 
@@ -516,7 +516,7 @@ BAB 14 — TRACKING BAND SYSTEM
 
 14.1 Latar Belakang dan Inspirasi
 
-Tracking Band System terinspirasi dari teknologi motion capture yang digunakan dalam industri pembuatan film dan Visual Effects atau VFX. Dalam produksi film seperti Avatar, Planet of the Apes, dan berbagai film Marvel, aktor menggunakan bodysuit yang dilengkapi puluhan hingga ratusan marker reflektif kecil berbentuk bola. Kamera infrared khusus dari merk seperti Vicon atau OptiTrack mendeteksi marker-marker ini untuk merekam gerakan aktor dengan presisi milimeter. Sistem profesional ini berharga puluhan hingga ratusan ribu dollar.
+Tracking Band System terinspirasi dari teknologi motion capture yang digunakan dalam industri pembuatan film dan Visual Effects atau VFX. Dalam produksi film seperti Avatar, Planet of the Apes, dan berbagai film Marvel, aktor menggunakan bodysuit yang dilengkapi puluhan hingga ratusan marker reflektif kecil berbentuk bola. Kamera infrared khusus dari merk seperti Vicon atau OptiTrack mendeteksi marker-marker ini untuk merekam gerakan aktor dengan presisi milimeter. Sistem profesional ini berharga ratusan juta hingga miliaran rupiah.
 
 Konsep Tracking Band mengadaptasi prinsip dasar marker-assisted tracking ini namun menyederhanakannya secara drastis agar sesuai dengan konteks fitness tracking. Alih-alih bodysuit penuh dengan marker reflektif yang mahal, kita menggunakan gelang elastis berwarna neon yang dipakai di beberapa titik kunci tubuh. Alih-alih kamera infrared khusus, kita menggunakan RGB camera standar dengan deteksi warna berbasis HSV color space.
 
@@ -534,13 +534,13 @@ Temuan penting adalah bahwa pergelangan tangan dan pergelangan kaki memiliki lin
 
 Berdasarkan temuan ini, sistem tracking band dirancang dengan tiga kategori ukuran.
 
-Size S berjumlah dua buah dengan range adjustable 14 hingga 26 sentimeter. Band ini fit untuk pergelangan tangan dan pergelangan kaki serta forearm. Material menggunakan neoprene 2 milimeter dengan penutup velcro dan lebar 4 hingga 5 sentimeter. Sisi dalam dilengkapi grip dots atau silicone strips untuk mencegah band bergeser. Material neoprene tahan air dan keringat. Warna yang ditetapkan adalah Hijau Neon untuk band pertama dan Biru Neon untuk band kedua. Estimasi berat per band adalah 15 hingga 20 gram dan estimasi harga adalah 1 hingga 2 dollar per band.
+Size S berjumlah dua buah dengan range adjustable 14 hingga 26 sentimeter. Band ini fit untuk pergelangan tangan dan pergelangan kaki serta forearm. Material menggunakan neoprene 2 milimeter dengan penutup velcro dan lebar 4 hingga 5 sentimeter. Sisi dalam dilengkapi grip dots atau silicone strips untuk mencegah band bergeser. Material neoprene tahan air dan keringat. Warna yang ditetapkan adalah Hijau Neon untuk band pertama dan Biru Neon untuk band kedua. Estimasi berat per band adalah 15 hingga 20 gram dan estimasi harga adalah Rp 15.000 hingga Rp 30.000 per band.
 
-Size M berjumlah dua buah dengan range adjustable 28 hingga 58 sentimeter. Band ini fit untuk paha, upper arm atau bicep, dan betis. Material menggunakan neoprene 2 milimeter dengan penutup velcro panjang dan lebar 5 hingga 7 sentimeter. Strip velcro harus cukup panjang untuk mengakomodasi range 30 sentimeter dari terkecil ke terbesar. Sisi dalam dilengkapi silicone strips karena area paha cenderung lebih berkeringat. Warna yang ditetapkan adalah Kuning Neon untuk band pertama dan Merah Neon untuk band kedua. Estimasi berat per band adalah 25 hingga 35 gram dan estimasi harga adalah 2 hingga 3 dollar per band.
+Size M berjumlah dua buah dengan range adjustable 28 hingga 58 sentimeter. Band ini fit untuk paha, upper arm atau bicep, dan betis. Material menggunakan neoprene 2 milimeter dengan penutup velcro panjang dan lebar 5 hingga 7 sentimeter. Strip velcro harus cukup panjang untuk mengakomodasi range 30 sentimeter dari terkecil ke terbesar. Sisi dalam dilengkapi silicone strips karena area paha cenderung lebih berkeringat. Warna yang ditetapkan adalah Kuning Neon untuk band pertama dan Merah Neon untuk band kedua. Estimasi berat per band adalah 25 hingga 35 gram dan estimasi harga adalah Rp 30.000 hingga Rp 45.000 per band.
 
-Size L berjumlah satu buah dengan range adjustable 60 hingga 120 sentimeter. Band ini fit untuk dada dan perut. Material menggunakan elastic webbing dengan penutup velcro dan buckle quick-release serta lebar 5 hingga 8 sentimeter. Desain mirip dengan heart rate monitor strap dengan buckle untuk kemudahan pemakaian dan pelepasan cepat. Warna yang ditetapkan adalah Putih atau Silver Reflective. Estimasi berat adalah 40 hingga 60 gram dan estimasi harga adalah 3 hingga 5 dollar per band.
+Size L berjumlah satu buah dengan range adjustable 60 hingga 120 sentimeter. Band ini fit untuk dada dan perut. Material menggunakan elastic webbing dengan penutup velcro dan buckle quick-release serta lebar 5 hingga 8 sentimeter. Desain mirip dengan heart rate monitor strap dengan buckle untuk kemudahan pemakaian dan pelepasan cepat. Warna yang ditetapkan adalah Putih atau Silver Reflective. Estimasi berat adalah 40 hingga 60 gram dan estimasi harga adalah Rp 45.000 hingga Rp 75.000 per band.
 
-Total kit tracking band terdiri dari 5 band dalam 3 ukuran dengan total estimasi biaya 10 hingga 15 dollar.
+Total kit tracking band terdiri dari 5 band dalam 3 ukuran dengan total estimasi biaya Rp 150.000 hingga Rp 225.000.
 
 14.4 Konsep Repositionable Band
 
@@ -599,7 +599,7 @@ Sebagai opsi upgrade, sistem dapat dilengkapi dengan sensor Inertial Measurement
 
 Berdasarkan riset terbaru, sensor IMU yang sebelumnya populer yaitu MPU6050 dan BNO055 sudah dianggap obsolete untuk proyek baru di tahun 2025 hingga 2026. MPU6050 hanya memiliki 6 axis tanpa magnetometer, tidak memiliki on-board sensor fusion yang memadai, dan mengalami drift yang signifikan. BNO055 meskipun memiliki built-in sensor fusion sering mengalami error kalibrasi dan boros daya.
 
-Sensor yang direkomendasikan adalah BMI270 dari Bosch yang merupakan sensor generasi modern yang dirancang khusus untuk wearable dan fitness tracking. Keunggulan BMI270 meliputi built-in step counter dan gesture detection di level hardware sehingga ESP32 bisa tetap dalam mode deep sleep. Konsumsi daya kurang dari 1 miliampere saat active tracking yang jauh lebih hemat dibandingkan BNO055. Ukuran sangat kecil cocok untuk form factor wristband. Harga terjangkau yaitu sekitar 5 hingga 8 dollar per modul.
+Sensor yang direkomendasikan adalah BMI270 dari Bosch yang merupakan sensor generasi modern yang dirancang khusus untuk wearable dan fitness tracking. Keunggulan BMI270 meliputi built-in step counter dan gesture detection di level hardware sehingga ESP32 bisa tetap dalam mode deep sleep. Konsumsi daya kurang dari 1 miliampere saat active tracking yang jauh lebih hemat dibandingkan BNO055. Ukuran sangat kecil cocok untuk form factor wristband. Harga terjangkau yaitu sekitar Rp 75.000 hingga Rp 120.000 per modul.
 
 Alternatif lainnya adalah ICM-20948 dari InvenSense TDK yang merupakan sensor 9 axis dengan magnetometer built-in. Sensor ini direkomendasikan jika orientasi 3D absolut diperlukan misalnya untuk mengetahui arah hadap pengguna.
 
@@ -776,17 +776,17 @@ BAB 20 — ANALISIS KOMPETITOR
 
 20.1 Produk Komersial Existing
 
-Tempo Studio menggunakan 3D Time-of-Flight sensor dengan AI. Harganya berkisar 2000 hingga 5000 dollar ditambah langganan bulanan 39 dollar. Tempo menyediakan real-time form tracking dan auto rep counting untuk berbagai exercise. Target marketnya adalah home gym premium.
+Tempo Studio menggunakan 3D Time-of-Flight sensor dengan AI. Harganya berkisar Rp 30.000.000 hingga Rp 75.000.000 ditambah langganan bulanan Rp 585.000. Tempo menyediakan real-time form tracking dan auto rep counting untuk berbagai exercise. Target marketnya adalah home gym premium.
 
-Lululemon Mirror sebelumnya bernama Mirror menggunakan kamera dan instruktur virtual. Harganya sekitar 1500 dollar ditambah langganan bulanan 39 dollar. Form tracking hanya tersedia melalui instruktur yang memantau melalui video, bukan melalui AI otomatis. Target marketnya adalah lifestyle fitness.
+Lululemon Mirror sebelumnya bernama Mirror menggunakan kamera dan instruktur virtual. Harganya sekitar Rp 22.500.000 ditambah langganan bulanan Rp 585.000. Form tracking hanya tersedia melalui instruktur yang memantau melalui video, bukan melalui AI otomatis. Target marketnya adalah lifestyle fitness.
 
-Tonal menggunakan electromagnetic resistance dengan sensor built-in. Harganya sekitar 3500 dollar ditambah langganan bulanan 49 dollar. Form tracking dilakukan melalui data resistance motor dan bukan computer vision. Target marketnya adalah serious strength training.
+Tonal menggunakan electromagnetic resistance dengan sensor built-in. Harganya sekitar Rp 52.500.000 ditambah langganan bulanan Rp 735.000. Form tracking dilakukan melalui data resistance motor dan bukan computer vision. Target marketnya adalah serious strength training.
 
 GymCam merupakan proyek riset dari Carnegie Mellon University yang menggunakan single stationary camera dengan AI. Proyek ini mencapai 93.6 persen accuracy untuk exercise recognition. Target penggunaannya adalah penelitian dan gym monitoring.
 
 20.2 Diferensiasi Fitness Tracking Eye
 
-Sistem yang dibangun berbeda dari produk existing dalam beberapa aspek fundamental. Pertama, multi-camera wireless yang memberikan coverage 360 derajat dimana produk komersial umumnya menggunakan satu sensor atau kamera dari satu sudut saja. Kedua, biaya yang jauh lebih rendah yaitu 100 hingga 200 dollar versus 2000 hingga 5000 dollar untuk produk komersial. Ketiga, modular dan upgradeable dimana pengguna bisa mulai dari kamera saja dan menambahkan tracking band atau IMU sensor di kemudian hari tanpa mengubah hardware kamera. Keempat, portable dimana seluruh sistem muat dalam satu backpack sementara produk komersial umumnya merupakan instalasi permanen. Kelima, fokus pada lima exercise spesifik dengan analisis mendalam alih-alih mencoba cover semua exercise secara generik.
+Sistem yang dibangun berbeda dari produk existing dalam beberapa aspek fundamental. Pertama, multi-camera wireless yang memberikan coverage 360 derajat dimana produk komersial umumnya menggunakan satu sensor atau kamera dari satu sudut saja. Kedua, biaya yang jauh lebih rendah yaitu Rp 1.500.000 hingga Rp 3.000.000 versus Rp 30.000.000 hingga Rp 75.000.000 untuk produk komersial. Ketiga, modular dan upgradeable dimana pengguna bisa mulai dari kamera saja dan menambahkan tracking band atau IMU sensor di kemudian hari tanpa mengubah hardware kamera. Keempat, portable dimana seluruh sistem muat dalam satu backpack sementara produk komersial umumnya merupakan instalasi permanen. Kelima, fokus pada lima exercise spesifik dengan analisis mendalam alih-alih mencoba cover semua exercise secara generik.
 
 
 ================================================================================
@@ -805,7 +805,7 @@ Paket ini terdiri dari empat unit modul kamera XIAO ESP32-S3 Sense dengan modul 
 
 Pengguna cukup menempatkan empat kamera di sekitar area latihan, menghubungkannya ke WiFi, melakukan kalibrasi sekali, dan mulai berlatih. Sistem mendeteksi exercise dan menghitung repetisi menggunakan computer vision saja tanpa aksesoris tambahan.
 
-Estimasi biaya hardware adalah 100 hingga 150 dollar. Akurasi diperkirakan 85 hingga 90 persen. Waktu setup adalah 5 hingga 10 menit. Ini merupakan paket yang direkomendasikan untuk memulai karena paling simple dan sudah memberikan hasil yang baik.
+Estimasi biaya hardware adalah Rp 1.500.000 hingga Rp 2.250.000. Akurasi diperkirakan 85 hingga 90 persen. Waktu setup adalah 5 hingga 10 menit. Ini merupakan paket yang direkomendasikan untuk memulai karena paling simple dan sudah memberikan hasil yang baik.
 
 Kelebihannya adalah paling mudah di-setup, paling murah, dan pengguna tidak perlu memakai aksesoris apapun di tubuh. Kekurangannya adalah akurasi bisa menurun saat terjadi occlusion dan saat gerakan sangat cepat.
 
@@ -815,7 +815,7 @@ Paket ini mencakup semua komponen dari Paket Basic ditambah lima buah tracking b
 
 Pengguna memasang band sesuai instruksi yang ditampilkan di aplikasi sebelum memulai exercise. Band bisa dipindahkan antar posisi sesuai exercise yang dilakukan. Sistem menggunakan warna band sebagai referensi tambahan untuk meningkatkan akurasi identifikasi bagian tubuh.
 
-Estimasi biaya tambahan adalah 10 hingga 15 dollar sehingga total menjadi 110 hingga 165 dollar. Akurasi diperkirakan meningkat menjadi 90 hingga 95 persen. Waktu setup menjadi 7 hingga 12 menit termasuk pemasangan band.
+Estimasi biaya tambahan adalah Rp 150.000 hingga Rp 225.000 sehingga total menjadi Rp 1.650.000 hingga Rp 2.475.000. Akurasi diperkirakan meningkat menjadi 90 hingga 95 persen. Waktu setup menjadi 7 hingga 12 menit termasuk pemasangan band.
 
 Paket ini merupakan rekomendasi best value karena peningkatan akurasi yang signifikan dengan biaya tambahan yang minimal.
 
@@ -825,7 +825,7 @@ Paket ini mencakup semua komponen dari Paket Tracking Band ditambah dua unit IMU
 
 IMU sensor mendeteksi gerakan bahkan saat kamera tidak bisa melihat karena occlusion, memberikan data gerakan cepat yang mungkin terlewat oleh kamera karena frame rate terbatas, dan meningkatkan akurasi counting terutama untuk gerakan cepat seperti jump.
 
-Estimasi biaya tambahan adalah 20 hingga 40 dollar sehingga total menjadi 130 hingga 205 dollar. Akurasi diperkirakan mencapai 95 hingga 98 persen. Waktu setup menjadi 10 hingga 15 menit termasuk pemasangan band dan IMU.
+Estimasi biaya tambahan adalah Rp 300.000 hingga Rp 600.000 sehingga total menjadi Rp 1.950.000 hingga Rp 3.075.000. Akurasi diperkirakan mencapai 95 hingga 98 persen. Waktu setup menjadi 10 hingga 15 menit termasuk pemasangan band dan IMU.
 
 Paket ini direkomendasikan untuk pengguna yang membutuhkan akurasi maksimal. Kekurangannya adalah IMU sensor perlu di-charge secara berkala dan menambah sedikit kerumitan setup.
 
@@ -840,11 +840,11 @@ BAB 22 — ESTIMASI BIAYA
 
 22.1 Biaya Hardware per Paket
 
-Paket Basic memiliki rincian biaya sebagai berikut. Empat unit XIAO ESP32-S3 Sense dengan harga per unit sekitar 13 hingga 15 dollar sehingga subtotal 52 hingga 60 dollar. Empat unit mini tripod foldable dengan harga per unit sekitar 5 hingga 8 dollar sehingga subtotal 20 hingga 32 dollar. Satu unit travel WiFi router seharga sekitar 25 hingga 40 dollar. Empat unit USB-C power adapter atau kabel dengan subtotal sekitar 10 hingga 15 dollar. Satu unit ChArUco calibration board yang dicetak sendiri dengan biaya cetak sekitar 5 dollar. Total biaya hardware Paket Basic adalah sekitar 112 hingga 152 dollar.
+Paket Basic memiliki rincian biaya sebagai berikut. Empat unit XIAO ESP32-S3 Sense dengan harga per unit sekitar Rp 195.000 hingga Rp 225.000 sehingga subtotal Rp 780.000 hingga Rp 900.000. Empat unit mini tripod foldable dengan harga per unit sekitar Rp 75.000 hingga Rp 120.000 sehingga subtotal Rp 300.000 hingga Rp 480.000. Satu unit travel WiFi router seharga sekitar Rp 375.000 hingga Rp 600.000. Empat unit USB-C power adapter atau kabel dengan subtotal sekitar Rp 150.000 hingga Rp 225.000. Satu unit ChArUco calibration board yang dicetak sendiri dengan biaya cetak sekitar Rp 75.000. Total biaya hardware Paket Basic adalah sekitar Rp 1.680.000 hingga Rp 2.280.000.
 
-Paket Tracking Band menambahkan biaya lima unit tracking band neon velcro dengan tiga ukuran seharga total sekitar 10 hingga 15 dollar. Total biaya hardware Paket Tracking Band menjadi sekitar 122 hingga 167 dollar.
+Paket Tracking Band menambahkan biaya lima unit tracking band neon velcro dengan tiga ukuran seharga total sekitar Rp 150.000 hingga Rp 225.000. Total biaya hardware Paket Tracking Band menjadi sekitar Rp 1.830.000 hingga Rp 2.505.000.
 
-Paket Pro menambahkan biaya dua unit XIAO ESP32-S3 dengan harga per unit sekitar 10 hingga 13 dollar sehingga subtotal 20 hingga 26 dollar. Dua unit sensor BMI270 breakout board dengan harga per unit sekitar 5 hingga 8 dollar sehingga subtotal 10 hingga 16 dollar. Dua unit baterai LiPo dan casing wristband dengan subtotal sekitar 10 hingga 15 dollar. Total biaya hardware tambahan Pro sekitar 40 hingga 57 dollar. Total biaya hardware Paket Pro menjadi sekitar 162 hingga 224 dollar.
+Paket Pro menambahkan biaya dua unit XIAO ESP32-S3 dengan harga per unit sekitar Rp 150.000 hingga Rp 195.000 sehingga subtotal Rp 300.000 hingga Rp 390.000. Dua unit sensor BMI270 breakout board dengan harga per unit sekitar Rp 75.000 hingga Rp 120.000 sehingga subtotal Rp 150.000 hingga Rp 240.000. Dua unit baterai LiPo dan casing wristband dengan subtotal sekitar Rp 150.000 hingga Rp 225.000. Total biaya hardware tambahan Pro sekitar Rp 600.000 hingga Rp 855.000. Total biaya hardware Paket Pro menjadi sekitar Rp 2.430.000 hingga Rp 3.360.000.
 
 22.2 Biaya Recurring
 
@@ -1010,7 +1010,7 @@ Konfigurasi ini dirancang untuk studio gym atau penggunaan dalam ruangan di mana
 27.2 Konfigurasi 2: PORTABLE TRACKING KIT (Outdoor/Mobile Setup)
 Konfigurasi ini dirancang untuk pelatih yang sering berpindah lokasi (taman, rumah klien) di mana akses listrik sulit didapatkan, namun membutuhkan akurasi tinggi.
 - Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV2640.
-- Sumber Daya: Mini Powerbank 5000mAh per kamera. Kami merekomendasikan powerbank mini berukuran tabung/lipstik (harga sekitar $5 - $8) yang sangat praktis dan murah. Powerbank ini cukup untuk menyuplai daya selama 15-20 jam nonstop, dan sangat mudah diganti (plug-and-play) jika rusak, tanpa perlu membongkar casing kamera.
+- Sumber Daya: Mini Powerbank 5000mAh per kamera. Kami merekomendasikan powerbank mini berukuran tabung/lipstik (harga sekitar Rp 75.000 - Rp 120.000) yang sangat praktis dan murah. Powerbank ini cukup untuk menyuplai daya selama 15-20 jam nonstop, dan sangat mudah diganti (plug-and-play) jika rusak, tanpa perlu membongkar casing kamera.
 - Aksesoris Tubuh: 1 Set Tracking Band (Gelang warna neon).
 - Target Pengguna: Pelatih keliling atau event fitness outdoor.
 
@@ -1018,7 +1018,7 @@ Konfigurasi ini dirancang untuk pelatih yang sering berpindah lokasi (taman, rum
 Konfigurasi tertinggi yang menggabungkan semua sensor untuk akurasi level profesional, dengan sistem power custom yang dirancang untuk ketahanan maksimal dengan biaya sangat rendah.
 - Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV2640.
 - Sumber Daya Custom: Baterai 18650 2P (Parallel). Alih-alih powerbank, kita menggunakan casing khusus yang memuat 2 buah baterai lithium 18650 yang disusun secara paralel (3.7V). 
-  - Alasan menggunakan 2P: Board XIAO memiliki chip manajemen daya bawaan yang mendukung baterai 3.7V. Dengan susunan 2P, kita mendapatkan kapasitas masif (sekitar 6000mAh - 7000mAh) hanya dengan biaya $6 - $8 untuk dua baterai + holder.
+  - Alasan menggunakan 2P: Board XIAO memiliki chip manajemen daya bawaan yang mendukung baterai 3.7V. Dengan susunan 2P, kita mendapatkan kapasitas masif (sekitar 6000mAh - 7000mAh) hanya dengan biaya Rp 90.000 - Rp 120.000 untuk dua baterai + holder.
   - Alasan TIDAK menggunakan 2S: Konfigurasi 2S (Series) menghasilkan 7.4V, yang akan membakar board XIAO secara langsung kecuali kita menambahkan modul penurun tegangan (Buck Converter) ke 5V. Konfigurasi 2P jauh lebih simpel, murah, aman, dan bisa di-charge langsung dari port USB-C di board XIAO.
 - Aksesoris Tubuh: 1 Set Tracking Band (Gelang warna neon).
 - Sensor Tambahan: 2x IMU Wristband (Sensor gerak di pergelangan tangan).
