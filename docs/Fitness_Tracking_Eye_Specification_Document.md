@@ -149,7 +149,7 @@ Prosesor yang digunakan adalah ESP32-S3 dual-core Xtensa LX7 dengan clock speed 
 
 Memori yang tersedia meliputi 8MB PSRAM dan 8MB Flash. PSRAM berukuran dua kali lipat dari ESP32-CAM yang hanya memiliki 4MB. Kapasitas PSRAM yang lebih besar ini krusial untuk buffering frame di resolusi tinggi dan mencegah frame drop yang sering terjadi pada ESP32-CAM karena keterbatasan buffer.
 
-Modul kamera default adalah OV2640 dengan resolusi maksimal 2 megapiksel yaitu 1600 kali 1200 piksel. Namun board ini juga mendukung sensor OV5640 dengan resolusi 5 megapiksel jika diperlukan upgrade kualitas gambar di masa depan. Untuk keperluan pose estimation, resolusi VGA yaitu 640 kali 480 piksel sudah lebih dari cukup dan merupakan sweet spot antara kualitas dan bandwidth.
+Modul kamera utama adalah OV5640 dengan lensa standar (auto fokus, non-wide angle) dan resolusi 5 megapiksel, memberikan gambar yang jernih. Penggunaan lensa standar ini mencukupi karena coverage sudah didapat melalui penempatan empat perangkat di empat sudut. Untuk keperluan pose estimation, resolusi VGA yaitu 640 kali 480 piksel sudah lebih dari cukup dan merupakan sweet spot antara kualitas dan bandwidth.
 
 Konektivitas WiFi menggunakan standar 802.11 b/g/n pada frekuensi 2.4GHz. WiFi pada ESP32-S3 diketahui lebih stabil dibandingkan ESP32 original berkat perbaikan pada firmware dan stack jaringan. Board ini juga mendukung Bluetooth 5.0 LE yang bisa dimanfaatkan untuk konfigurasi awal atau komunikasi dengan sensor IMU.
 
@@ -198,7 +198,7 @@ Setiap Camera Node terdiri dari tiga komponen utama yang dirakit menjadi satu un
 
 Komponen pertama adalah board mikrokontroler XIAO ESP32-S3 Sense dari Seeed Studio. Board ini berukuran sangat kecil yaitu 21 kali 17.5 milimeter, kira-kira seukuran kuku jempol orang dewasa. Board ini sudah dilengkapi dengan slot kamera, antena WiFi, konektor USB-C untuk programming dan power, serta pad untuk koneksi baterai LiPo. Board inilah yang menjalankan firmware untuk menangkap frame dari kamera, mengkompresinya menjadi JPEG, dan mengirimkannya sebagai MJPEG stream melalui WiFi.
 
-Komponen kedua adalah modul kamera OV2640 yang terhubung ke board melalui flex cable pendek. Modul kamera ini berukuran sangat kecil yaitu sekitar 8 kali 8 milimeter untuk sensor dan lens assembly. Pada XIAO ESP32-S3 Sense, modul kamera ini dipasang di slot khusus di bagian belakang board menggunakan konektor FPC. Pemasangan sangat mudah yaitu buka kunci konektor FPC, masukkan flex cable, lalu kunci kembali. Tidak diperlukan soldering.
+Komponen kedua adalah modul kamera OV5640 (lensa standar, auto fokus) yang terhubung ke board melalui flex cable pendek. Modul kamera ini berukuran sangat kecil yaitu sekitar 8 kali 8 milimeter untuk sensor dan lens assembly. Pada XIAO ESP32-S3 Sense, modul kamera ini dipasang di slot khusus di bagian belakang board menggunakan konektor FPC. Pemasangan sangat mudah yaitu buka kunci konektor FPC, masukkan flex cable, lalu kunci kembali. Tidak diperlukan soldering.
 
 Komponen ketiga adalah sumber daya listrik. Ada tiga opsi yang bisa dipilih tergantung skenario penggunaan.
 
@@ -232,7 +232,7 @@ Dengan opsi USB-C power adapter tanpa baterai terintegrasi, dimensi bisa lebih k
 
 Proses perakitan setiap Camera Node relatif sederhana dan tidak memerlukan keahlian elektronik tingkat lanjut.
 
-Langkah pertama adalah memasang modul kamera OV2640 ke board XIAO ESP32-S3 Sense. Buka kunci konektor FPC di board dengan cara mengangkat tab pengunci ke atas. Masukkan flex cable modul kamera ke konektor dengan orientasi yang benar yaitu kontak tembaga menghadap ke bawah. Tekan tab pengunci kembali ke bawah untuk mengunci flex cable. Proses ini memakan waktu sekitar 30 detik.
+Langkah pertama adalah memasang modul kamera OV5640 ke board XIAO ESP32-S3 Sense. Buka kunci konektor FPC di board dengan cara mengangkat tab pengunci ke atas. Masukkan flex cable modul kamera ke konektor dengan orientasi yang benar yaitu kontak tembaga menghadap ke bawah. Tekan tab pengunci kembali ke bawah untuk mengunci flex cable. Proses ini memakan waktu sekitar 30 detik.
 
 Langkah kedua khusus untuk opsi baterai terintegrasi adalah menyolder kabel baterai LiPo ke battery pad positif dan negatif di board. Pad ini sudah ditandai dengan jelas di board. Perlu kehati-hatian untuk tidak membalik polaritas karena bisa merusak board. Proses ini memakan waktu sekitar 5 menit bagi yang berpengalaman soldering.
 
@@ -248,7 +248,7 @@ Total waktu perakitan per unit diperkirakan 10 hingga 15 menit untuk opsi USB ad
 
 Berikut adalah daftar komponen lengkap untuk satu unit Camera Node.
 
-XIAO ESP32-S3 Sense board sudah termasuk modul kamera OV2640 dan antena WiFi dengan harga sekitar Rp 195.000 hingga Rp 225.000. Casing 3D printed atau project box dengan harga sekitar Rp 15.000 hingga Rp 45.000. Mini tripod foldable dengan thread mount seperempat inci seharga sekitar Rp 75.000 hingga Rp 120.000.
+XIAO ESP32-S3 Sense board, dipasangkan dengan modul kamera OV5640 dan antena WiFi dengan harga bundle penyesuaian sekitar Rp 195.000 hingga Rp 250.000. Casing 3D printed atau project box dengan harga sekitar Rp 15.000 hingga Rp 45.000. Mini tripod foldable dengan thread mount seperempat inci seharga sekitar Rp 75.000 hingga Rp 120.000.
 
 Untuk opsi USB power, diperlukan USB-C cable panjang 1 hingga 2 meter seharga sekitar Rp 30.000 hingga Rp 45.000 dan USB power adapter 5V 1A seharga sekitar Rp 30.000 hingga Rp 45.000.
 
@@ -801,7 +801,7 @@ Yang ditawarkan sebagai opsi kepada klien hanyalah level aksesoris tambahan yang
 
 21.2 Paket Basic — Camera Only
 
-Paket ini terdiri dari empat unit modul kamera XIAO ESP32-S3 Sense dengan modul kamera OV2640. Empat unit mini tripod foldable untuk penempatan kamera. Satu unit travel WiFi router. Power adapter atau powerbank untuk setiap kamera. Satu unit ChArUco calibration board. Software aplikasi backend Python dan web dashboard.
+Paket ini terdiri dari empat unit modul kamera XIAO ESP32-S3 Sense dengan modul kamera OV5640. Empat unit mini tripod foldable untuk penempatan kamera. Satu unit travel WiFi router. Power adapter atau powerbank untuk setiap kamera. Satu unit ChArUco calibration board. Software aplikasi backend Python dan web dashboard.
 
 Pengguna cukup menempatkan empat kamera di sekitar area latihan, menghubungkannya ke WiFi, melakukan kalibrasi sekali, dan mulai berlatih. Sistem mendeteksi exercise dan menghitung repetisi menggunakan computer vision saja tanpa aksesoris tambahan.
 
@@ -982,7 +982,7 @@ Vertical Jump memiliki empat state yaitu STAND, CROUCH, JUMP, dan LAND. Threshol
 
 Lampiran D: Daftar Komponen Hardware Paket Lengkap
 
-Komponen kamera terdiri dari empat unit Seeed Studio XIAO ESP32-S3 Sense, empat unit modul kamera OV2640, empat unit mini tripod foldable, empat unit USB-C cable, empat unit USB power adapter 5V 1A, dan satu unit travel WiFi router 5GHz.
+Komponen kamera terdiri dari empat unit Seeed Studio XIAO ESP32-S3 Sense, empat unit modul kamera OV5640, empat unit mini tripod foldable, empat unit USB-C cable, empat unit USB power adapter 5V 1A, dan satu unit travel WiFi router 5GHz.
 
 Komponen tracking band terdiri dari dua unit neoprene velcro band Size S warna hijau neon dan biru neon, dua unit neoprene velcro band Size M warna kuning neon dan merah neon, dan satu unit elastic strap band Size L warna putih.
 
@@ -1001,7 +1001,7 @@ Untuk menghindari kebingungan klien akibat terlalu banyak opsi teknis, bab ini m
 
 27.1 Konfigurasi 1: BASIC STUDIO KIT (Indoor/Fixed Setup)
 Konfigurasi ini dirancang untuk studio gym atau penggunaan dalam ruangan di mana akses listrik selalu tersedia. Ini adalah opsi termurah dan paling bebas perawatan (maintenance-free).
-- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV2640.
+- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV5640 (standar, auto fokus).
 - Sumber Daya: USB-C Power Adapter 5V 1A. (Dicolok langsung ke listrik). Kelebihannya, sistem bisa menyala 24/7 tanpa perlu repot mengisi daya baterai.
 - Mount: 4x Mini Tripod.
 - Aksesoris Tubuh: Tidak ada. Sistem sepenuhnya bergantung pada AI MediaPipe untuk mendeteksi tubuh (Markerless).
@@ -1009,14 +1009,14 @@ Konfigurasi ini dirancang untuk studio gym atau penggunaan dalam ruangan di mana
 
 27.2 Konfigurasi 2: PORTABLE TRACKING KIT (Outdoor/Mobile Setup)
 Konfigurasi ini dirancang untuk pelatih yang sering berpindah lokasi (taman, rumah klien) di mana akses listrik sulit didapatkan, namun membutuhkan akurasi tinggi.
-- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV2640.
+- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV5640 (standar, auto fokus).
 - Sumber Daya: Mini Powerbank 5000mAh per kamera. Kami merekomendasikan powerbank mini berukuran tabung/lipstik (harga sekitar Rp 75.000 - Rp 120.000) yang sangat praktis dan murah. Powerbank ini cukup untuk menyuplai daya selama 15-20 jam nonstop, dan sangat mudah diganti (plug-and-play) jika rusak, tanpa perlu membongkar casing kamera.
 - Aksesoris Tubuh: 1 Set Tracking Band (Gelang warna neon).
 - Target Pengguna: Pelatih keliling atau event fitness outdoor.
 
 27.3 Konfigurasi 3: PRO KIT (Max Accuracy & Max Battery)
 Konfigurasi tertinggi yang menggabungkan semua sensor untuk akurasi level profesional, dengan sistem power custom yang dirancang untuk ketahanan maksimal dengan biaya sangat rendah.
-- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV2640.
+- Mata Kamera: 4x XIAO ESP32-S3 Sense + Lensa OV5640 (standar, auto fokus).
 - Sumber Daya Custom: Baterai 18650 2P (Parallel). Alih-alih powerbank, kita menggunakan casing khusus yang memuat 2 buah baterai lithium 18650 yang disusun secara paralel (3.7V). 
   - Alasan menggunakan 2P: Board XIAO memiliki chip manajemen daya bawaan yang mendukung baterai 3.7V. Dengan susunan 2P, kita mendapatkan kapasitas masif (sekitar 6000mAh - 7000mAh) hanya dengan biaya Rp 90.000 - Rp 120.000 untuk dua baterai + holder.
   - Alasan TIDAK menggunakan 2S: Konfigurasi 2S (Series) menghasilkan 7.4V, yang akan membakar board XIAO secara langsung kecuali kita menambahkan modul penurun tegangan (Buck Converter) ke 5V. Konfigurasi 2P jauh lebih simpel, murah, aman, dan bisa di-charge langsung dari port USB-C di board XIAO.
