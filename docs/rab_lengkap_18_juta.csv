@@ -1,0 +1,19 @@
+Kategori,Komponen Pekerjaan,Deskripsi & Deliverable,Qty,Harga Satuan (Rp),Subtotal V1 (Rp),Subtotal V2 (Rp)
+Hardware,XIAO ESP32-S3 Sense + OV5640,Modul mikrokontroler kamera 5MP,4,225000,900000,0
+Hardware,Raspberry Pi AI Camera (Sony IMX500),Sensor 12.3MP + On-chip NPU AI Inference,2,2000000,0,4000000
+Hardware,Raspberry Pi Zero 2 W,Host controller WiFi gateway & storage manager,2,1000000,0,2000000
+Hardware,MicroSD Card 64GB High Endurance,Media simpan rekaman video Full HD lokal,2,75000,0,150000
+Hardware,Mini Tripod Foldable Heavy Duty,Penyangga kamera stabil di tripod,2,120000,480000,240000
+Hardware,Travel WiFi Router Dedicated,Jaringan nirkabel mandiri lokal bebas interferensi,1,600000,600000,600000
+Hardware,USB-C Power Adapter / Powerbank 10Ah,Sistem catu daya mandiri operasional kamera,2,250000,225000,500000
+Hardware,Custom 3D Printed Casing + Mount,Casing presisi pelindung PCB & dudukan tripod,2,150000,600000,300000
+Hardware,Enclosure Mounting Bracket,Bracket dudukan & pengaman tripod,4,200000,800000,0
+Hardware,Sensor IMU BMI270 & Baterai LiPo,Modul sensor inersial gerak cepat pergelangan,2,232500,465000,0
+Hardware,Tracking Band Neon Velcro,Gelang neon penanda sendi tahan keringat,1,200000,200000,0
+,,TOTAL ASET FISIK HARDWARE,,,4270000,7790000
+Software,Core Edge AI Vision & Motion Engine,Pipeline NPU/MediaPipe + State Machine 5 Latihan,1,4500000,6000000,4500000
+Software,Web Dashboard & Mobile Application,UI/UX Dashboard + Post-Exercise Video Review Overlay,1,3500000,5000000,3500000
+Software,Infrastruktur Cloud Server & Domain,Cloud VPS Dedicated 1 Tahun + SSL + Sync Database,1,1000000,1200000,1000000
+Software,Integrasi Sistem QA Testing & UAT,Kalibrasi 3D pengujian lapangan UAT & buku manual,1,1210000,1530000,1210000
+,,TOTAL PENGEMBANGAN SISTEM & SOFTWARE,,,13730000,10210000
+,,TOTAL KESELURUHAN ANGGARAN INVESTASI,,,18000000,18000000
