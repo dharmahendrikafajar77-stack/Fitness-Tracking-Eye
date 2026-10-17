@@ -2,15 +2,23 @@
 Fitness Tracking Eye - Dual-View Video Simulator & Multi-Camera Fusion Engine
 =============================================================================
 Skrip simulator sinkronisasi dua sudut pandang (Dual-View / Multi-Camera):
-1. Membaca dua sumber video (Kamera 1: Samping/Sagittal, Kamera 2: Depan/Frontal).
-2. Menyelaraskan garis waktu (temporal sync) via offset timestamp (--start1 & --start2).
-3. Pacing real-time 1.0x terkunci ke jam dinding (wall-clock) dengan kompensasi AI delay.
-4. Menjalankan estimasi pose 3D independen untuk kedua kamera via MediaPipe BlazePose.
-5. Fusi Biomekanik Multi-Sudut (Sagittal: Sudut Siku & Kelurusan Tulang Punggung;
-   Frontal: Keseimbangan Kemiringan Bahu & Lebar Bukaan Telapak Tangan).
-6. Tampilan antarmuka visual terpadu Side-by-Side dengan Glassmorphism HUD.
-7. Kontrol sinkronisasi live interaktif: '[' / ']' untuk geser offset 0.1s saat video berjalan.
-8. Siaran data skeleton terpadu via WebSocket (ws://localhost:8765).
+1. Membaca dua sumber video:
+   - PV1: POV Kamera Depan (Frontal View)
+   - PV2: POV Kamera Samping (Sagittal View)
+2. Otomatis memuat video default per jenis latihan dari data/videos/:
+   - Push Up     : PushUpPV1.mp4 & PushUpPV2.mp4
+   - Sit Up      : SitUpPV1.mp4 & SitUpPV2.mp4
+   - Squat Jump  : SquatJumpPV1.mp4 & SquatJumpPV2.mp4
+   - Vert Jump   : VertJumpPV1.mp4 & VertJumpPV2.mp4
+3. Menyelaraskan garis waktu (temporal sync) via offset timestamp (--start1 & --start2).
+4. Pacing real-time 1.0x terkunci ke jam dinding (wall-clock) dengan kompensasi AI delay.
+5. Menjalankan estimasi pose 3D independen untuk kedua kamera via MediaPipe BlazePose.
+6. Fusi Biomekanik Multi-Sudut:
+   - Sagittal (PV2) : Sudut siku, kelurusan tulang punggung (hip sag), sudut lutut, penghitung repetisi.
+   - Frontal (PV1)  : Simetri kemiringan bahu (shoulder tilt), bukaan tangan (hand width), knee valgus.
+7. Tampilan Side-by-Side cerdas (mendukung penuh video Portrait 1080x1920 dan Landscape).
+8. Kontrol live hotkeys interaktif: '[' / ']' untuk geser offset 0.1s saat video berjalan.
+9. Siaran data skeleton terpadu via WebSocket (ws://localhost:8765).
 """
 
 import cv2
@@ -28,19 +36,30 @@ from pathlib import Path
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
+DEFAULT_EXERCISE_VIDEOS = {
+    "push_up": ("data/videos/PushUpPV1.mp4", "data/videos/PushUpPV2.mp4"),
+    "sit_up": ("data/videos/SitUpPV1.mp4", "data/videos/SitUpPV2.mp4"),
+    "squat_jump": ("data/videos/SquatJumpPV1.mp4", "data/videos/SquatJumpPV2.mp4"),
+    "vertical_jump": ("data/videos/VertJumpPV1.mp4", "data/videos/VertJumpPV2.mp4"),
+}
+
 
 class DualViewExerciseTracker:
-    """Mesin evaluasi fusi biomekanik multi-sudut (Sagittal + Frontal)."""
+    """Mesin evaluasi fusi biomekanik multi-sudut (Sagittal/PV2 + Frontal/PV1)."""
     def __init__(self, config_path="config/exercise_config.yaml", exercise_name="push_up"):
         self.exercise_name = exercise_name
         self.counter = 0
         self.stage = "UP"  # "UP" or "DOWN"
         self.last_transition_time = time.time()
-        self.min_transition_sec = 0.35  # Anti-jitter debounce
+        self.min_transition_sec = 0.35  # Anti-jitter debounce filter
         self.form_errors = []
-        self.cam1_angles = {}
-        self.cam2_metrics = {}
+        self.sagittal_angles = {}
+        self.frontal_metrics = {}
         self.config = self._load_config(config_path)
+
+        # State tracking khusus vertical jump
+        self.vjump_baseline_y = None
+        self.vjump_max_height_px = 0.0
 
     def _load_config(self, config_path):
         cfg_file = Path(config_path)
@@ -61,42 +80,39 @@ class DualViewExerciseTracker:
             angle = 360.0 - angle
         return float(angle)
 
-    def process_dual_landmarks(self, lms1, lms2):
+    def process_dual_landmarks(self, lms_frontal, lms_sagittal):
         """
         Fusi metrik biomekanik:
-        - lms1 (Cam 1 / Sagittal View): Sudut sendi fleksi-ekstensi & evaluasi repetisi
-        - lms2 (Cam 2 / Frontal View): Keseimbangan simetri bahu & bukaan tangan
+        - lms_sagittal (PV2 / Samping): Sudut sendi fleksi-ekstensi & state machine repetisi
+        - lms_frontal  (PV1 / Depan)  : Keseimbangan simetri bahu & bukaan tangan / posisi lutut
         """
         self.form_errors = []
-        self.cam1_angles = {}
-        self.cam2_metrics = {}
+        self.sagittal_angles = {}
+        self.frontal_metrics = {}
         now = time.time()
 
         # =================================================================
-        # 1. EVALUASI KAMERA 1 (SAGITTAL / SAMPING)
+        # 1. EVALUASI KAMERA SAMPING (SAGITTAL / PV2)
         # =================================================================
-        if lms1 is not None:
-            # Auto-detect profil tubuh (Kiri vs Kanan)
-            l_vis = (lms1[mp_pose.PoseLandmark.LEFT_SHOULDER.value].visibility +
-                     lms1[mp_pose.PoseLandmark.LEFT_ELBOW.value].visibility +
-                     lms1[mp_pose.PoseLandmark.LEFT_HIP.value].visibility) / 3.0
-            r_vis = (lms1[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].visibility +
-                     lms1[mp_pose.PoseLandmark.RIGHT_ELBOW.value].visibility +
-                     lms1[mp_pose.PoseLandmark.RIGHT_HIP.value].visibility) / 3.0
+        if lms_sagittal is not None:
+            # Auto-detect profil tubuh (Kiri vs Kanan) berdasarkan visibilitas sendi
+            l_vis = (lms_sagittal[11].visibility + lms_sagittal[13].visibility + lms_sagittal[23].visibility) / 3.0
+            r_vis = (lms_sagittal[12].visibility + lms_sagittal[14].visibility + lms_sagittal[24].visibility) / 3.0
             use_left = l_vis >= r_vis
 
-            sh1 = [lms1[11 if use_left else 12].x, lms1[11 if use_left else 12].y]
-            el1 = [lms1[13 if use_left else 14].x, lms1[13 if use_left else 14].y]
-            wr1 = [lms1[15 if use_left else 16].x, lms1[15 if use_left else 16].y]
-            hp1 = [lms1[23 if use_left else 24].x, lms1[23 if use_left else 24].y]
-            kn1 = [lms1[25 if use_left else 26].x, lms1[25 if use_left else 26].y]
-            ak1 = [lms1[27 if use_left else 28].x, lms1[27 if use_left else 28].y]
+            sh = [lms_sagittal[11 if use_left else 12].x, lms_sagittal[11 if use_left else 12].y]
+            el = [lms_sagittal[13 if use_left else 14].x, lms_sagittal[13 if use_left else 14].y]
+            wr = [lms_sagittal[15 if use_left else 16].x, lms_sagittal[15 if use_left else 16].y]
+            hp = [lms_sagittal[23 if use_left else 24].x, lms_sagittal[23 if use_left else 24].y]
+            kn = [lms_sagittal[25 if use_left else 26].x, lms_sagittal[25 if use_left else 26].y]
+            ak = [lms_sagittal[27 if use_left else 28].x, lms_sagittal[27 if use_left else 28].y]
 
+            # A. PUSH UP
             if self.exercise_name == "push_up":
-                elbow_angle = self.calculate_angle(sh1, el1, wr1)
-                body_angle = self.calculate_angle(sh1, hp1, ak1)
-                self.cam1_angles["Elbow Angle"] = round(elbow_angle, 1)
-                self.cam1_angles["Body Line"] = round(body_angle, 1)
+                elbow_angle = self.calculate_angle(sh, el, wr)
+                body_angle = self.calculate_angle(sh, hp, ak)
+                self.sagittal_angles["Elbow Angle"] = round(elbow_angle, 1)
+                self.sagittal_angles["Body Line"] = round(body_angle, 1)
 
                 cfg = self.config.get("push_up", {})
                 up_th = cfg.get("elbow_angle", {}).get("up_threshold", 155)
@@ -116,9 +132,10 @@ class DualViewExerciseTracker:
                 if body_angle < 150:
                     self.form_errors.append("Punggung Melengkung (Sagittal)")
 
+            # B. SQUAT / SQUAT JUMP
             elif "squat" in self.exercise_name:
-                knee_angle = self.calculate_angle(hp1, kn1, ak1)
-                self.cam1_angles["Knee Angle"] = round(knee_angle, 1)
+                knee_angle = self.calculate_angle(hp, kn, ak)
+                self.sagittal_angles["Knee Angle"] = round(knee_angle, 1)
 
                 cfg = self.config.get("squat_jump", {})
                 stand_th = cfg.get("knee_angle", {}).get("stand_threshold", 160)
@@ -134,12 +151,13 @@ class DualViewExerciseTracker:
                         self.counter += 1
                         self.last_transition_time = now
 
-                if kn1[0] > ak1[0] + 0.06:
+                if kn[0] > ak[0] + 0.06:
                     self.form_errors.append("Lutut Lewati Jari Kaki")
 
+            # C. SIT UP
             elif self.exercise_name == "sit_up":
-                hip_angle = self.calculate_angle(sh1, hp1, kn1)
-                self.cam1_angles["Hip Angle"] = round(hip_angle, 1)
+                hip_angle = self.calculate_angle(sh, hp, kn)
+                self.sagittal_angles["Hip Angle"] = round(hip_angle, 1)
 
                 if hip_angle > 130 and self.stage != "DOWN":
                     if now - self.last_transition_time > self.min_transition_sec:
@@ -151,48 +169,72 @@ class DualViewExerciseTracker:
                         self.counter += 1
                         self.last_transition_time = now
 
-        # =================================================================
-        # 2. EVALUASI KAMERA 2 (FRONTAL / DEPAN)
-        # =================================================================
-        if lms2 is not None:
-            l_sh = [lms2[11].x, lms2[11].y]
-            r_sh = [lms2[12].x, lms2[12].y]
-            l_wr = [lms2[15].x, lms2[15].y]
-            r_wr = [lms2[16].x, lms2[16].y]
-            l_kn = [lms2[25].x, lms2[25].y]
-            r_kn = [lms2[26].x, lms2[26].y]
-            l_ak = [lms2[27].x, lms2[27].y]
-            r_ak = [lms2[28].x, lms2[28].y]
+            # D. VERTICAL JUMP
+            elif "vert" in self.exercise_name:
+                knee_angle = self.calculate_angle(hp, kn, ak)
+                self.sagittal_angles["Knee Angle"] = round(knee_angle, 1)
 
-            # Kemiringan Bahu (Shoulder Tilt)
+                hip_y = hp[1]
+                if self.vjump_baseline_y is None:
+                    self.vjump_baseline_y = hip_y
+
+                # Crouch -> Jump Takeoff -> Landing
+                if knee_angle < 130 and self.stage != "CROUCH":
+                    if now - self.last_transition_time > self.min_transition_sec:
+                        self.stage = "CROUCH"
+                        self.last_transition_time = now
+                elif self.stage == "CROUCH" and hip_y < self.vjump_baseline_y - 0.05:
+                    self.stage = "AIRBORNE"
+                    self.last_transition_time = now
+                elif self.stage == "AIRBORNE" and abs(hip_y - self.vjump_baseline_y) < 0.04:
+                    if now - self.last_transition_time > self.min_transition_sec:
+                        self.stage = "LANDED"
+                        self.counter += 1
+                        self.last_transition_time = now
+
+        # =================================================================
+        # 2. EVALUASI KAMERA DEPAN (FRONTAL / PV1)
+        # =================================================================
+        if lms_frontal is not None:
+            l_sh = [lms_frontal[11].x, lms_frontal[11].y]
+            r_sh = [lms_frontal[12].x, lms_frontal[12].y]
+            l_wr = [lms_frontal[15].x, lms_frontal[15].y]
+            r_wr = [lms_frontal[16].x, lms_frontal[16].y]
+            l_kn = [lms_frontal[25].x, lms_frontal[25].y]
+            r_kn = [lms_frontal[26].x, lms_frontal[26].y]
+            l_ak = [lms_frontal[27].x, lms_frontal[27].y]
+            r_ak = [lms_frontal[28].x, lms_frontal[28].y]
+
+            # A. Kemiringan Bahu (Shoulder Tilt)
             dx = abs(r_sh[0] - l_sh[0])
             dy = r_sh[1] - l_sh[1]
             shoulder_tilt_deg = abs(np.arctan2(dy, max(0.001, dx)) * 180.0 / np.pi)
-            self.cam2_metrics["Shoulder Tilt"] = f"{round(shoulder_tilt_deg, 1)} deg"
+            self.frontal_metrics["Shoulder Tilt"] = f"{round(shoulder_tilt_deg, 1)} deg"
 
             if shoulder_tilt_deg > 6.5:
-                self.form_errors.append("Bahu Miring / Asimetris (Frontal)")
+                self.form_errors.append("Bahu Miring (Frontal)")
 
-            # Rasio Bukaan Tangan vs Bahu (Hand Stance Width)
-            sh_dist = np.hypot(r_sh[0] - l_sh[0], r_sh[1] - l_sh[1])
-            wr_dist = np.hypot(r_wr[0] - l_wr[0], r_wr[1] - l_wr[1])
-            if sh_dist > 0.05:
-                width_ratio = wr_dist / sh_dist
-                self.cam2_metrics["Hand Width"] = f"{round(width_ratio, 2)}x Bahu"
-                if width_ratio > 2.3:
-                    self.form_errors.append("Posisi Tangan Terlalu Lebar")
-                elif width_ratio < 0.75:
-                    self.form_errors.append("Posisi Tangan Terlalu Sempit")
+            # B. Rasio Bukaan Tangan vs Bahu (Push Up / Plank)
+            if self.exercise_name == "push_up":
+                sh_dist = np.hypot(r_sh[0] - l_sh[0], r_sh[1] - l_sh[1])
+                wr_dist = np.hypot(r_wr[0] - l_wr[0], r_wr[1] - l_wr[1])
+                if sh_dist > 0.05:
+                    width_ratio = wr_dist / sh_dist
+                    self.frontal_metrics["Hand Width"] = f"{round(width_ratio, 2)}x Bahu"
+                    if width_ratio > 2.3:
+                        self.form_errors.append("Posisi Tangan Terlalu Lebar")
+                    elif width_ratio < 0.75:
+                        self.form_errors.append("Posisi Tangan Terlalu Sempit")
 
-            # Cek Lutut Masuk ke Dalam (Valgus) untuk Squat
-            if "squat" in self.exercise_name:
+            # C. Cek Lutut Masuk ke Dalam (Valgus) untuk Squat / Jump
+            if "squat" in self.exercise_name or "vert" in self.exercise_name:
                 knee_dist = np.hypot(r_kn[0] - l_kn[0], r_kn[1] - l_kn[1])
                 ankle_dist = np.hypot(r_ak[0] - l_ak[0], r_ak[1] - l_ak[1])
                 if ankle_dist > 0.05:
                     if knee_dist < ankle_dist * 0.70:
                         self.form_errors.append("Lutut Tertekuk Ke Dalam (Valgus)")
 
-        return self.counter, self.stage, self.cam1_angles, self.cam2_metrics, self.form_errors
+        return self.counter, self.stage, self.sagittal_angles, self.frontal_metrics, self.form_errors
 
 
 class MockDualWebSocketServer:
@@ -242,7 +284,7 @@ class MockDualWebSocketServer:
 
 
 def draw_glass_card(img, x1, y1, x2, y2, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.75):
-    """Menggambar panel HUD semi-transparan via ROI slicing cepat."""
+    """Menggambar panel HUD semi-transparan via ROI slicing cepat tanpa copy full image."""
     h_img, w_img, _ = img.shape
     x1, y1 = max(0, int(x1)), max(0, int(y1))
     x2, y2 = min(w_img, int(x2)), min(h_img, int(y2))
@@ -254,7 +296,7 @@ def draw_glass_card(img, x1, y1, x2, y2, bg_color=(15, 20, 35), border_color=(0,
 
 
 def run_dual_simulator(
-    cam1_path,
+    cam1_path=None,
     cam2_path=None,
     start1_sec=0.0,
     start2_sec=0.0,
@@ -269,62 +311,74 @@ def run_dual_simulator(
         ws_server = MockDualWebSocketServer()
         ws_server.start()
 
-    # Buka Kamera 1
-    if not cam1_path or not Path(cam1_path).exists():
-        print(f"[Error] File video Kamera 1 tidak ditemukan: {cam1_path}")
-        return
-    cap1 = cv2.VideoCapture(str(cam1_path))
+    # Otomatis deteksi file jika tidak dispesifikasikan
+    if not cam1_path:
+        default_pair = DEFAULT_EXERCISE_VIDEOS.get(exercise)
+        if default_pair and Path(default_pair[0]).exists() and Path(default_pair[1]).exists():
+            cam1_path, cam2_path = default_pair[0], default_pair[1]
+            print(f"[Simulator] Otomatis memuat pasangan video latihan '{exercise}':")
+            print(f"  - PV1 (Depan / Frontal)  : {cam1_path}")
+            print(f"  - PV2 (Samping / Sagittal): {cam2_path}")
+        else:
+            print(f"[Error] Video default untuk latihan '{exercise}' tidak ditemukan di folder data/videos/!")
+            return
 
-    # Buka Kamera 2 (jika tidak disediakan, gunakan kamera 1 sebagai simulasi cermin/demo)
-    using_demo_cam2 = False
-    if cam2_path and Path(cam2_path).exists():
-        cap2 = cv2.VideoCapture(str(cam2_path))
+    # Deteksi mana yang Frontal (PV1) dan mana yang Sagittal (PV2)
+    c1_str = str(cam1_path).lower()
+    c2_str = str(cam2_path).lower() if cam2_path else ""
+
+    # Standarisasi:
+    # front_path = POV Depan (PV1)
+    # side_path  = POV Samping (PV2)
+    if ("pv2" in c1_str or "side" in c1_str) and ("pv1" in c2_str or "front" in c2_str):
+        front_path, side_path = cam2_path, cam1_path
+        start_front, start_side = start2_sec, start1_sec
     else:
-        print("[Simulator] Video Kamera 2 tidak dispesifikasikan. Menjalankan mode DEMO dengan klon Kamera 1.")
-        cap2 = cv2.VideoCapture(str(cam1_path))
-        using_demo_cam2 = True
+        front_path = cam1_path
+        side_path = cam2_path if cam2_path and Path(cam2_path).exists() else cam1_path
+        start_front, start_side = start1_sec, start2_sec
 
-    if not cap1.isOpened() or not cap2.isOpened():
-        print("[Error] Gagal membuka stream video Kamera 1 atau Kamera 2!")
+    cap_front = cv2.VideoCapture(str(front_path))
+    cap_side = cv2.VideoCapture(str(side_path))
+
+    if not cap_front.isOpened() or not cap_side.isOpened():
+        print("[Error] Gagal membuka video Frontal atau Sagittal!")
         return
 
     # Ambil spesifikasi FPS
-    fps1 = cap1.get(cv2.CAP_PROP_FPS) or 30.0
-    fps2 = cap2.get(cv2.CAP_PROP_FPS) or 30.0
-    target_fps = max(fps1, fps2)
+    fps_f = cap_front.get(cv2.CAP_PROP_FPS) or 30.0
+    fps_s = cap_side.get(cv2.CAP_PROP_FPS) or 30.0
+    target_fps = max(fps_f, fps_s)
     if target_fps <= 0 or np.isnan(target_fps) or target_fps > 120:
         target_fps = 30.0
     target_frame_time = 1.0 / target_fps
 
     # Inisialisasi posisi awal (Trimming / Offset)
-    def apply_start_offsets(s1, s2):
-        cap1.set(cv2.CAP_PROP_POS_MSEC, max(0.0, s1 * 1000.0))
-        cap2.set(cv2.CAP_PROP_POS_MSEC, max(0.0, s2 * 1000.0))
+    def apply_start_offsets(sf, ss):
+        cap_front.set(cv2.CAP_PROP_POS_MSEC, max(0.0, sf * 1000.0))
+        cap_side.set(cv2.CAP_PROP_POS_MSEC, max(0.0, ss * 1000.0))
 
-    cur_start1 = max(0.0, float(start1_sec))
-    cur_start2 = max(0.0, float(start2_sec))
-    apply_start_offsets(cur_start1, cur_start2)
+    cur_start_front = max(0.0, float(start_front))
+    cur_start_side = max(0.0, float(start_side))
+    apply_start_offsets(cur_start_front, cur_start_side)
 
     # Inisialisasi model Pose untuk masing-masing kamera
-    pose1 = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
-    pose2 = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    pose_front = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    pose_side = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-    # Output canvas size: Normalized height 540
-    norm_h = 540
     writer = None
-    if save_output:
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        # Lebar canvas total dihitung nanti setelah frame pertama terbaca
-        print(f"[Simulator] Hasil video fusi akan disimpan ke: {save_output}")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
     print("\n" + "="*70)
-    print(" FITNESS TRACKING EYE - DUAL-VIEW FUSION ENGINE SIMULATOR")
+    print(" FITNESS TRACKING EYE - DUAL-VIEW MULTI-CAMERA FUSION ENGINE")
     print(f" Latihan: {exercise.upper()} | Target FPS: {target_fps:.1f}")
-    print(f" Offset Awal -> Cam1: {cur_start1:.2f}s | Cam2: {cur_start2:.2f}s (Selisih: {cur_start2 - cur_start1:+.2f}s)")
+    print(f" Frontal (PV1): {front_path}")
+    print(f" Sagittal (PV2): {side_path}")
+    print(f" Offset Awal  : Frontal {cur_start_front:.2f}s | Sagittal {cur_start_side:.2f}s (Selisih: {cur_start_side - cur_start_front:+.2f}s)")
     print(" --------------------------------------------------------------------")
     print(" Kontrol Interaktif di Jendela Video:")
-    print("   [  /  ]  : Geser offset Cam 2 mundur / maju (-/+ 0.1 detik)")
-    print("   {  /  }  : Geser offset Cam 2 mundur / maju (-/+ 1.0 detik)")
+    print("   [  /  ]  : Geser offset Sagittal (PV2) mundur / maju (-/+ 0.1 detik)")
+    print("   {  /  }  : Geser offset Sagittal (PV2) mundur / maju (-/+ 1.0 detik)")
     print("   SPASI    : Pause / Lanjutkan pemutaran")
     print("   R        : Reset kembali ke titik awal sinkronisasi")
     print("   Q        : Keluar dari simulator")
@@ -353,18 +407,18 @@ def run_dual_simulator(
         target_frame_idx = int(elapsed_clock * target_fps)
 
         while expected_frame_idx < target_frame_idx - 1:
-            ret1 = cap1.grab()
-            ret2 = cap2.grab()
-            if not ret1 or not ret2:
+            ret_f = cap_front.grab()
+            ret_s = cap_side.grab()
+            if not ret_f or not ret_s:
                 break
             expected_frame_idx += 1
 
-        ret1, frame1 = cap1.read()
-        ret2, frame2 = cap2.read()
+        ret_f, frame_f = cap_front.read()
+        ret_s, frame_s = cap_side.read()
 
-        if not ret1 or not ret2:
+        if not ret_f or not ret_s:
             if loop:
-                apply_start_offsets(cur_start1, cur_start2)
+                apply_start_offsets(cur_start_front, cur_start_side)
                 video_start_time = time.perf_counter()
                 expected_frame_idx = 0
                 continue
@@ -379,29 +433,31 @@ def run_dual_simulator(
             fps_display = 15.0 / max(0.001, (now_t - fps_timer))
             fps_timer = now_t
 
-        # Normalisasi ketinggian kedua frame agar presisi sejajar
-        h1, w1 = frame1.shape[:2]
-        h2, w2 = frame2.shape[:2]
-        new_w1 = int(w1 * (norm_h / h1))
-        new_w2 = int(w2 * (norm_h / h2))
+        # Normalisasi ketinggian kedua frame:
+        # Jika video portrait (1080x1920), norm_h = 680 agar lebar canvas seimbang (~760x680)
+        hf, wf = frame_f.shape[:2]
+        hs, ws = frame_s.shape[:2]
+        norm_h = 680 if hf > wf else 540
+        new_wf = int(wf * (norm_h / hf))
+        new_ws = int(ws * (norm_h / hs))
 
-        f1_resized = cv2.resize(frame1, (new_w1, norm_h))
-        f2_resized = cv2.resize(frame2, (new_w2, norm_h))
+        ff_resized = cv2.resize(frame_f, (new_wf, norm_h))
+        fs_resized = cv2.resize(frame_s, (new_ws, norm_h))
 
-        # Inferensi MediaPipe untuk Cam 1 & Cam 2
-        rgb1 = cv2.cvtColor(f1_resized, cv2.COLOR_BGR2RGB)
-        rgb2 = cv2.cvtColor(f2_resized, cv2.COLOR_BGR2RGB)
-        rgb1.flags.writeable = False
-        rgb2.flags.writeable = False
+        # Inferensi MediaPipe independen untuk Frontal & Sagittal
+        rgbf = cv2.cvtColor(ff_resized, cv2.COLOR_BGR2RGB)
+        rgbs = cv2.cvtColor(fs_resized, cv2.COLOR_BGR2RGB)
+        rgbf.flags.writeable = False
+        rgbs.flags.writeable = False
 
-        res1 = pose1.process(rgb1)
-        res2 = pose2.process(rgb2)
+        res_f = pose_front.process(rgbf)
+        res_s = pose_side.process(rgbs)
 
-        lms1 = res1.pose_landmarks.landmark if res1.pose_landmarks else None
-        lms2 = res2.pose_landmarks.landmark if res2.pose_landmarks else None
+        lms_f = res_f.pose_landmarks.landmark if res_f.pose_landmarks else None
+        lms_s = res_s.pose_landmarks.landmark if res_s.pose_landmarks else None
 
         # Evaluasi Biomekanik Multi-Kamera
-        reps, stage, cam1_angles, cam2_metrics, errors = tracker.process_dual_landmarks(lms1, lms2)
+        reps, stage, sag_angles, front_metrics, errors = tracker.process_dual_landmarks(lms_f, lms_s)
         is_form_valid = len(errors) == 0
 
         # Broadcast via WebSocket
@@ -413,104 +469,112 @@ def run_dual_simulator(
                 "reps": reps,
                 "stage": stage,
                 "is_valid_form": is_form_valid,
-                "cam1_sagittal": {
-                    "detected": lms1 is not None,
-                    "angles": cam1_angles
+                "frontal_pv1": {
+                    "detected": lms_f is not None,
+                    "metrics": front_metrics
                 },
-                "cam2_frontal": {
-                    "detected": lms2 is not None,
-                    "metrics": cam2_metrics
+                "sagittal_pv2": {
+                    "detected": lms_s is not None,
+                    "angles": sag_angles
                 },
                 "form_errors": errors,
-                "sync_offset_sec": round(cur_start2 - cur_start1, 3)
+                "sync_offset_sec": round(cur_start_side - cur_start_front, 3)
             }
             ws_server.broadcast(payload)
 
         # Gambar skeleton pada masing-masing frame
         line_color = (0, 255, 0) if is_form_valid else (0, 0, 255)
-        if res1.pose_landmarks:
+        if res_f.pose_landmarks:
             mp_drawing.draw_landmarks(
-                f1_resized, res1.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                mp_drawing.DrawingSpec(color=(0, 240, 255), thickness=2, circle_radius=2),
+                ff_resized, res_f.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(255, 140, 0), thickness=2, circle_radius=2),
                 mp_drawing.DrawingSpec(color=line_color, thickness=2, circle_radius=2)
             )
-        if res2.pose_landmarks:
+        if res_s.pose_landmarks:
             mp_drawing.draw_landmarks(
-                f2_resized, res2.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                mp_drawing.DrawingSpec(color=(255, 120, 0), thickness=2, circle_radius=2),
+                fs_resized, res_s.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(0, 240, 255), thickness=2, circle_radius=2),
                 mp_drawing.DrawingSpec(color=line_color, thickness=2, circle_radius=2)
             )
 
         # Gabungkan kedua frame secara Side-by-Side (Canvas Utama)
-        canvas = np.hstack((f1_resized, f2_resized))
+        canvas = np.hstack((ff_resized, fs_resized))
         canvas_h, canvas_w, _ = canvas.shape
 
         # Garis pemisah vertikal elegan di tengah
-        cv2.line(canvas, (new_w1, 0), (new_w1, canvas_h), (0, 240, 255), 2)
+        cv2.line(canvas, (new_wf, 0), (new_wf, canvas_h), (0, 240, 255), 2)
 
         # =================================================================
         # HUD 1: KIRI ATAS - STATUS REPETISI UTAMA (Neon Glass Panel)
         # =================================================================
-        draw_glass_card(canvas, 15, 15, 275, 120, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.8)
-        cv2.putText(canvas, f"EXERCISE: {exercise.upper()}", (25, 38),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 240, 255), 1, cv2.LINE_AA)
-        cv2.putText(canvas, f"REPS: {reps}", (25, 78),
+        reps_w = min(220, new_wf - 20)
+        draw_glass_card(canvas, 10, 10, 10 + reps_w, 110, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.85)
+        cv2.putText(canvas, f"EXERCISE: {exercise.upper()}", (18, 32),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 240, 255), 1, cv2.LINE_AA)
+        cv2.putText(canvas, f"REPS: {reps}", (18, 70),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.15, (255, 255, 255), 2, cv2.LINE_AA)
         stage_color = (0, 255, 128) if stage == "UP" else (0, 165, 255)
-        cv2.putText(canvas, f"STAGE: {stage}  |  {fps_display:.0f} FPS", (25, 106),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, stage_color, 2, cv2.LINE_AA)
+        cv2.putText(canvas, f"STAGE: {stage} | {fps_display:.0f} FPS", (18, 96),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, stage_color, 2, cv2.LINE_AA)
 
         # =================================================================
-        # HUD 2: TENGAH ATAS - LABEL KAMERA & STATUS SINKRONISASI
+        # HUD 2: TENGAH ATAS - SINKRONISASI OFFSET PILL
         # =================================================================
-        draw_glass_card(canvas, new_w1 - 180, 15, new_w1 + 180, 65, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.85)
-        cv2.putText(canvas, "DUAL-VIEW FUSION", (new_w1 - 85, 36),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 240, 255), 1, cv2.LINE_AA)
-        offset_text = f"Offset Cam2: {cur_start2 - cur_start1:+.2f}s"
-        cv2.putText(canvas, offset_text, (new_w1 - 80, 56),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1, cv2.LINE_AA)
-
-        # Label Nama Masing-Masing Kamera
-        cv2.putText(canvas, "CAM 1: SAGITTAL (SIDE VIEW)", (25, canvas_h - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 240, 255), 1, cv2.LINE_AA)
-        cv2.putText(canvas, "CAM 2: FRONTAL (FRONT VIEW)" if not using_demo_cam2 else "CAM 2: DEMO (MIRROR/FRONT)",
-                    (new_w1 + 25, canvas_h - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 140, 0), 1, cv2.LINE_AA)
+        pill_w = 160
+        pill_x1 = max(10, new_wf - pill_w // 2)
+        pill_x2 = min(canvas_w - 10, pill_x1 + pill_w)
+        draw_glass_card(canvas, pill_x1, 10, pill_x2, 42, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.85)
+        offset_text = f"Offset: {cur_start_side - cur_start_front:+.2f}s"
+        cv2.putText(canvas, offset_text, (pill_x1 + 14, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1, cv2.LINE_AA)
 
         # =================================================================
         # HUD 3: KANAN ATAS - METRIK FUSI BIOMEKANIK (MULTI-SUDUT)
         # =================================================================
         all_metrics = []
-        for k, v in cam1_angles.items():
-            all_metrics.append((f"Cam1 {k}", f"{v} deg"))
-        for k, v in cam2_metrics.items():
-            all_metrics.append((f"Cam2 {k}", str(v)))
+        for k, v in sag_angles.items():
+            all_metrics.append((f"Sagittal {k}", f"{v} deg"))
+        for k, v in front_metrics.items():
+            all_metrics.append((f"Frontal {k}", str(v)))
 
         if all_metrics:
-            panel_w = 280
-            panel_h = 35 + len(all_metrics) * 24
-            rx1 = canvas_w - panel_w - 15
-            ry1 = 15
-            rx2 = canvas_w - 15
+            panel_w = min(240, new_ws - 20)
+            panel_h = 32 + len(all_metrics) * 22
+            rx1 = canvas_w - panel_w - 10
+            ry1 = 10
+            rx2 = canvas_w - 10
             ry2 = ry1 + panel_h
 
-            draw_glass_card(canvas, rx1, ry1, rx2, ry2, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.8)
-            cv2.putText(canvas, "FUSED BIOMECHANICS", (rx1 + 14, ry1 + 22),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 240, 255), 1, cv2.LINE_AA)
+            draw_glass_card(canvas, rx1, ry1, rx2, ry2, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.85)
+            cv2.putText(canvas, "BIOMECHANICS", (rx1 + 10, ry1 + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1, cv2.LINE_AA)
 
             for m_idx, (m_lbl, m_val) in enumerate(all_metrics):
-                my = ry1 + 45 + (m_idx * 23)
-                cv2.putText(canvas, f"{m_lbl}: {m_val}", (rx1 + 14, my),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.48, (255, 255, 255), 1, cv2.LINE_AA)
+                my = ry1 + 40 + (m_idx * 21)
+                cv2.putText(canvas, f"{m_lbl}: {m_val}", (rx1 + 10, my),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 255, 255), 1, cv2.LINE_AA)
 
-            # Warning banner jika ada kesalahan form
-            if errors:
-                for e_idx, err_msg in enumerate(errors):
-                    ey = ry2 + 10 + (e_idx * 30)
-                    draw_glass_card(canvas, canvas_w - 320, ey, canvas_w - 15, ey + 26,
-                                    bg_color=(0, 0, 160), border_color=(0, 0, 255), alpha=0.9)
-                    cv2.putText(canvas, f"! {err_msg}", (canvas_w - 310, ey + 18),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.48, (255, 255, 255), 1, cv2.LINE_AA)
+        # =================================================================
+        # HUD 4: BOTTOM BANNERS (LABEL KAMERA)
+        # =================================================================
+        draw_glass_card(canvas, 10, canvas_h - 40, new_wf - 10, canvas_h - 10, bg_color=(15, 20, 35), border_color=(255, 140, 0), alpha=0.8)
+        cv2.putText(canvas, "CAM 1: DEPAN (PV1 / FRONTAL)", (20, canvas_h - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, (255, 160, 50), 1, cv2.LINE_AA)
+
+        draw_glass_card(canvas, new_wf + 10, canvas_h - 40, canvas_w - 10, canvas_h - 10, bg_color=(15, 20, 35), border_color=(0, 240, 255), alpha=0.8)
+        cv2.putText(canvas, "CAM 2: SAMPING (PV2 / SAGITTAL)", (new_wf + 20, canvas_h - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 240, 255), 1, cv2.LINE_AA)
+
+        # =================================================================
+        # HUD 5: ALERT BANNER JIKA ADA KESALAHAN FORM
+        # =================================================================
+        if errors:
+            for e_idx, err_msg in enumerate(errors):
+                ey = canvas_h - 75 - (e_idx * 30)
+                draw_glass_card(canvas, canvas_w // 2 - 170, ey, canvas_w // 2 + 170, ey + 26,
+                                bg_color=(0, 0, 160), border_color=(0, 0, 255), alpha=0.9)
+                cv2.putText(canvas, f"! {err_msg}", (canvas_w // 2 - 160, ey + 18),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.44, (255, 255, 255), 1, cv2.LINE_AA)
 
         # Tampilkan canvas terpadu
         cv2.imshow("Fitness Tracking Eye - Dual-View Multi-Camera Simulator", canvas)
@@ -529,30 +593,30 @@ def run_dual_simulator(
             is_paused = True
         elif key == ord('r'):
             # Reset
-            apply_start_offsets(cur_start1, cur_start2)
+            apply_start_offsets(cur_start_front, cur_start_side)
             video_start_time = time.perf_counter()
             expected_frame_idx = 0
             tracker.counter = 0
-            print(f"[Sync] Reset posisi video ke awal (Offset: {cur_start2 - cur_start1:+.2f}s)")
+            print(f"[Sync] Reset posisi video ke awal (Offset: {cur_start_side - cur_start_front:+.2f}s)")
         elif key == ord(']'):
-            cur_start2 += 0.1
-            apply_start_offsets(cur_start1, cur_start2)
-            print(f"[Sync] Cam 2 maju +0.1s -> Selisih baru: {cur_start2 - cur_start1:+.2f}s")
+            cur_start_side += 0.1
+            apply_start_offsets(cur_start_front, cur_start_side)
+            print(f"[Sync] Sagittal (PV2) maju +0.1s -> Selisih baru: {cur_start_side - cur_start_front:+.2f}s")
         elif key == ord('['):
-            cur_start2 = max(0.0, cur_start2 - 0.1)
-            apply_start_offsets(cur_start1, cur_start2)
-            print(f"[Sync] Cam 2 mundur -0.1s -> Selisih baru: {cur_start2 - cur_start1:+.2f}s")
+            cur_start_side = max(0.0, cur_start_side - 0.1)
+            apply_start_offsets(cur_start_front, cur_start_side)
+            print(f"[Sync] Sagittal (PV2) mundur -0.1s -> Selisih baru: {cur_start_side - cur_start_front:+.2f}s")
         elif key == ord('}'):
-            cur_start2 += 1.0
-            apply_start_offsets(cur_start1, cur_start2)
-            print(f"[Sync] Cam 2 maju +1.0s -> Selisih baru: {cur_start2 - cur_start1:+.2f}s")
+            cur_start_side += 1.0
+            apply_start_offsets(cur_start_front, cur_start_side)
+            print(f"[Sync] Sagittal (PV2) maju +1.0s -> Selisih baru: {cur_start_side - cur_start_front:+.2f}s")
         elif key == ord('{'):
-            cur_start2 = max(0.0, cur_start2 - 1.0)
-            apply_start_offsets(cur_start1, cur_start2)
-            print(f"[Sync] Cam 2 mundur -1.0s -> Selisih baru: {cur_start2 - cur_start1:+.2f}s")
+            cur_start_side = max(0.0, cur_start_side - 1.0)
+            apply_start_offsets(cur_start_front, cur_start_side)
+            print(f"[Sync] Sagittal (PV2) mundur -1.0s -> Selisih baru: {cur_start_side - cur_start_front:+.2f}s")
 
-    cap1.release()
-    cap2.release()
+    cap_front.release()
+    cap_side.release()
     if writer:
         writer.release()
     cv2.destroyAllWindows()
@@ -561,10 +625,10 @@ def run_dual_simulator(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fitness Tracking Eye - Dual-View Fusion Simulator")
-    parser.add_argument("--cam1", type=str, required=True, help="Path ke berkas video Kamera 1 (Sagittal/Side View)")
-    parser.add_argument("--cam2", type=str, default=None, help="Path ke berkas video Kamera 2 (Frontal/Front View)")
-    parser.add_argument("--start1", type=float, default=0.0, help="Titik mulai video Cam 1 dalam detik (cth: 3.5)")
-    parser.add_argument("--start2", type=float, default=0.0, help="Titik mulai video Cam 2 dalam detik (cth: 8.2)")
+    parser.add_argument("--cam1", type=str, default=None, help="Path ke video Kamera 1 (PV1 / Frontal)")
+    parser.add_argument("--cam2", type=str, default=None, help="Path ke video Kamera 2 (PV2 / Sagittal)")
+    parser.add_argument("--start1", type=float, default=0.0, help="Titik mulai video Cam 1 dalam detik")
+    parser.add_argument("--start2", type=float, default=0.0, help="Titik mulai video Cam 2 dalam detik")
     parser.add_argument("--exercise", type=str, default="push_up",
                         choices=["push_up", "squat_jump", "pull_up", "sit_up", "vertical_jump"],
                         help="Jenis latihan yang dievaluasi")
