@@ -22,3 +22,6 @@ Thumbs.db
 # Benchmark video files (large binary assets)
 data/videos/*.mp4
 !data/videos/README.md
+
+# Microsoft Office temporary files
+~$*
